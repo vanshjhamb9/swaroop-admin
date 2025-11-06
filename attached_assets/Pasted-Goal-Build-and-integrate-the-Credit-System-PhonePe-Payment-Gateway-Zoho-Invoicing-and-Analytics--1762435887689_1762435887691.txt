@@ -1,0 +1,205 @@
+Goal: Build and integrate the Credit System, PhonePe Payment Gateway, Zoho Invoicing, and Analytics modules into the existing UrbanUplink project (Next.js + Firestore + Firebase Auth).
+
+🏗️ Project Background
+
+We already have an existing UrbanUplink admin panel built using:
+
+Next.js (frontend + API routes)
+
+Firebase Authentication (for user login & role-based access)
+
+Firestore Database (for data storage)
+
+The project follows a serverless architecture, meaning all backend logic should be implemented as Next.js API routes that directly interact with Firestore — not traditional Express or REST APIs.
+
+🎯 Overall Objective
+
+Develop and integrate the following new modules:
+
+Credit System (Prepaid/Postpaid)
+
+PhonePe Payment Integration
+
+Zoho Invoice Integration
+
+Analytics Dashboard
+
+These features must integrate seamlessly with the existing Firestore and Firebase Auth setup.
+The data layer should be accessible to the Unity frontend via Firebase Unity SDK, without needing separate REST APIs.
+
+💳 1. CREDIT SYSTEM
+Features:
+
+Support Prepaid and Postpaid plans for users.
+
+Store plan type, balance, and transaction logs in Firestore.
+
+Each user document should have:
+
+{
+  "userId": "UID",
+  "planType": "prepaid" | "postpaid",
+  "creditBalance": 500,
+  "transactions": [
+    {
+      "id": "txn123",
+      "type": "credit" | "debit",
+      "amount": 200,
+      "description": "Purchase via PhonePe",
+      "timestamp": "..."
+    }
+  ]
+}
+
+
+Implement logic to:
+
+Fetch user’s credit balance.
+
+Record all transactions.
+
+Deduct credits upon specific actions (e.g., feature usage).
+
+Handle negative balances for postpaid users.
+
+API Routes (in /pages/api/credit/):
+
+GET /credit/balance → fetch credit balance
+
+GET /credit/transactions → fetch last 10 transactions
+
+POST /credit/add → add credits (after successful payment)
+
+POST /credit/deduct → deduct credits from balance
+
+These will interact directly with Firestore (no external REST APIs).
+
+💰 2. PHONEPE PAYMENT GATEWAY INTEGRATION
+Flow:
+
+User clicks “Buy Credits” → API route /api/payment/phonepe/initiate
+
+Input: { amount }
+
+Returns: PhonePe checkout URL
+
+Unity frontend opens that URL in a WebView.
+
+After successful payment, PhonePe webhook calls /api/payment/phonepe/webhook
+
+Validate checksum.
+
+On success, update user’s Firestore document:
+
+Increase creditBalance.
+
+Add a new transaction entry (type "credit").
+
+Handle payment failure gracefully.
+
+Requirements:
+
+Use PhonePe sandbox environment for testing.
+
+Include secure HMAC-based signature generation.
+
+Store payment logs in a payments Firestore collection.
+
+🧾 3. ZOHO INVOICE INTEGRATION
+Requirements:
+
+Integrate Zoho Books API for auto-generating invoices after credit purchases.
+
+Workflow:
+
+After successful payment (in webhook), trigger Zoho API.
+
+Generate and email the invoice to the user.
+
+Use credentials provided by the management (to be stored securely in .env).
+
+Zoho API tasks:
+
+Create a customer record if not already exists.
+
+Generate and send an invoice for each successful transaction.
+
+📊 4. ANALYTICS DASHBOARD
+Admin Panel Additions:
+
+Create new “Analytics” section in the existing admin UI.
+
+Fetch data from Firestore and display:
+
+Total registered users.
+
+Total credit transactions.
+
+Revenue summary.
+
+Graph showing credit usage over time.
+
+Top active dealers/users.
+
+Use Firebase’s onSnapshot or Firestore queries to display real-time updates.
+
+🔐 AUTHENTICATION & ROLES
+
+Firebase Auth manages users.
+
+Use Firebase custom claims for role-based access (SuperAdmin, Dealer, etc.).
+
+Include a script (firebaseadmin.js) to assign SuperAdmin claims to specific emails.
+
+All API routes should verify Firebase tokens and role claims before executing any sensitive operation.
+
+📦 Tech Summary
+Component	Stack
+Frontend	Next.js (React)
+Backend	Next.js API Routes (Serverless)
+Database	Firestore
+Auth	Firebase Authentication
+Payment	PhonePe Gateway
+Invoicing	Zoho Books API
+Analytics	Firestore Queries / Charts
+✅ Deliverables
+
+Working APIs inside /pages/api/ folder:
+
+/api/auth/*
+
+/api/credit/*
+
+/api/payment/phonepe/*
+
+/api/invoice/zoho/*
+
+Firestore models & structure setup.
+
+Secure .env config for API keys.
+
+Postman or Thunder Client collection for all endpoints.
+
+Basic Admin UI updates for Analytics tab.
+
+🧩 Unity Integration Strategy
+
+Data fetched from Firestore directly using Firebase Unity SDK.
+
+Dharani will connect Unity to Firestore collections prepared by Vansh.
+
+No REST APIs — only structured collections and fields accessible via Firebase SDK.
+
+🪄 Summary of What You Need to Build
+
+Credit System logic (prepaid/postpaid)
+
+PhonePe payment flow + webhook
+
+Zoho invoice automation
+
+Firestore-based analytics
+
+Firebase role-based access
+
+Next.js API route implementation for all above features
