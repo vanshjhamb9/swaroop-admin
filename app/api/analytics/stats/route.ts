@@ -1,0 +1,102 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { adminAuth, adminFirestore } from '../../firebaseadmin';
+
+export async function GET(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get('authorization');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Missing or invalid authorization header' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.split('Bearer ')[1];
+    const decodedToken = await adminAuth.verifyIdToken(token);
+
+    if (!decodedToken.admin) {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
+
+    const [usersSnapshot, paymentsSnapshot, dealersSnapshot] = await Promise.all([
+      adminFirestore.collection('users').get(),
+      adminFirestore.collection('payments').where('status', '==', 'success').get(),
+      adminFirestore.collection('dealers').get()
+    ]);
+
+    const totalUsers = usersSnapshot.size;
+    const totalDealers = dealersSnapshot.size;
+
+    let totalRevenue = 0;
+    const paymentsByDate: Record<string, number> = {};
+    const transactionCount = paymentsSnapshot.size;
+
+    paymentsSnapshot.forEach(doc => {
+      const data = doc.data();
+      totalRevenue += data.amount || 0;
+      
+      const date = new Date(data.timestamp).toISOString().split('T')[0];
+      paymentsByDate[date] = (paymentsByDate[date] || 0) + (data.amount || 0);
+    });
+
+    const revenueByDate = Object.entries(paymentsByDate)
+      .map(([date, amount]) => ({ date, amount }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    const topUsers: any[] = [];
+    for (const doc of usersSnapshot.docs) {
+      const userId = doc.id;
+      const userData = doc.data();
+      
+      const userTransactionsSnapshot = await adminFirestore
+        .collection('users')
+        .doc(userId)
+        .collection('transactions')
+        .where('type', '==', 'debit')
+        .get();
+
+      let totalSpent = 0;
+      userTransactionsSnapshot.forEach(txDoc => {
+        totalSpent += txDoc.data().amount || 0;
+      });
+
+      if (totalSpent > 0) {
+        topUsers.push({
+          userId,
+          name: userData.name || 'Unknown',
+          email: userData.email || '',
+          totalSpent,
+          transactionCount: userTransactionsSnapshot.size
+        });
+      }
+    }
+
+    topUsers.sort((a, b) => b.totalSpent - a.totalSpent);
+    const top10Users = topUsers.slice(0, 10);
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        overview: {
+          totalUsers,
+          totalDealers,
+          totalRevenue,
+          transactionCount
+        },
+        revenueByDate,
+        topUsers: top10Users
+      }
+    });
+    
+  } catch (error: any) {
+    console.error('Error fetching analytics:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch analytics', details: error.message },
+      { status: 500 }
+    );
+  }
+}

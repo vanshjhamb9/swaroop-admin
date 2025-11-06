@@ -127,12 +127,92 @@ Preferred communication style: Simple, everyday language.
 - **Vercel**: Recommended deployment platform (optimized for Next.js)
 - **AWS S3**: Configured as alternative storage (credentials via environment variables)
 
-**Planned Integrations** (from attached assets):
-- **PhonePe Payment Gateway**: For credit system payments
-- **Zoho Invoicing**: For automated invoice generation
-- **Analytics Module**: For usage tracking and reporting
+**Integrated Features**:
+- **Credit System**: Prepaid/Postpaid plan management with transaction tracking
+- **PhonePe Payment Gateway**: Live payment processing with webhook validation
+- **Zoho Invoicing**: Automated invoice generation and email delivery
+- **Analytics Dashboard**: Real-time reporting and metrics visualization
 
 **Environment Variables Required**:
 - Firebase Admin SDK credentials (service account JSON fields)
-- Firebase client configuration (API key, project ID, etc.)
-- AWS credentials (access key, secret key, region)
+- PhonePe payment gateway credentials (merchant ID, salt key)
+- Zoho Books API credentials (client ID, secret, refresh token)
+
+## Recent Changes (November 2025)
+
+### Credit System Implementation
+Added comprehensive credit management system with:
+- User credit balance tracking (prepaid/postpaid plans)
+- Transaction history with pagination
+- Credit addition and deduction APIs
+- Firestore subcollections for transactions
+
+**New API Routes**:
+- `GET /api/credit/balance` - Fetch user credit balance
+- `GET /api/credit/transactions` - Get transaction history
+- `POST /api/credit/add` - Add credits to user account
+- `POST /api/credit/deduct` - Deduct credits from balance
+
+### PhonePe Payment Integration
+Integrated PhonePe payment gateway with:
+- HMAC-based signature generation for security
+- Payment initiation flow with redirect URLs
+- Webhook handler for payment status updates
+- Automatic credit addition on successful payments
+- Payment logging in Firestore
+
+**New API Routes**:
+- `POST /api/payment/phonepe/initiate` - Start payment process
+- `POST /api/payment/phonepe/webhook` - Handle payment callbacks
+
+### Zoho Books Integration
+Automated invoice generation system with:
+- Customer creation/lookup in Zoho Books
+- Invoice generation for credit purchases
+- Automatic invoice email delivery
+- OAuth token refresh handling
+
+**New API Routes**:
+- `POST /api/invoice/zoho/generate` - Generate and send invoices
+
+### Analytics Dashboard
+Admin analytics dashboard with:
+- Total users, dealers, revenue metrics
+- Revenue tracking by date
+- Top 10 active users ranking
+- Real-time data from Firestore
+
+**New API Routes**:
+- `GET /api/analytics/stats` - Fetch analytics data
+
+**New UI Pages**:
+- `/analytics` - Admin analytics dashboard with charts and metrics
+
+### Firestore Collections
+
+**users/{userId}**:
+```
+{
+  userId, name, email, role,
+  planType: 'prepaid' | 'postpaid',
+  creditBalance: number,
+  createdAt, updatedAt
+}
+```
+
+**users/{userId}/transactions/{txnId}**:
+```
+{
+  id, type, amount, description,
+  timestamp, balanceAfter, metadata
+}
+```
+
+**payments/{paymentId}**:
+```
+{
+  id, userId, amount, status,
+  paymentMethod, phonePeTransactionId,
+  zohoInvoiceId, timestamp, webhookData
+}
+```
