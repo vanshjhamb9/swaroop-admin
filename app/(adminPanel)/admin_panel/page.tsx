@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Paper, Grid } from "@mui/material";
+import { Box, Typography, Paper, Grid, CircularProgress, Alert } from "@mui/material";
 import useOwnersStore from "@/store/dealersPanel/OwnersInfo";
 import useAdminOwnerStore from "@/store/adminPanel/AdminOwnersInfo";
 import { collection, getDocs } from "firebase/firestore";
@@ -12,18 +12,60 @@ function AdminPage() {
     info: { name, email },
   } = useAdminOwnerStore();
   const [registeredDealers, setregisteredDealers] = useState<number>(0);
+  const [totalAdmins, setTotalAdmins] = useState<number>(0);
+  const [totalVehicles, setTotalVehicles] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
   const fetchdealers = async () => {
     try {
-      const dealers = await getDocs(collection(db, "dealers"));
+      setLoading(true);
+      setError(null);
+      
+      const [dealersSnap, adminsSnap] = await Promise.all([
+        getDocs(collection(db, "dealers")),
+        getDocs(collection(db, "admins"))
+      ]);
 
-      setregisteredDealers(dealers.docs.length);
-    } catch (e) {
-      toast.error("couldnt Fetch Information");
+      setregisteredDealers(dealersSnap.docs.length);
+      setTotalAdmins(adminsSnap.docs.length);
+
+      let vehicleCount = 0;
+      for (const dealerDoc of dealersSnap.docs) {
+        const vehiclesSnap = await getDocs(collection(db, "dealers", dealerDoc.id, "vehicles"));
+        vehicleCount += vehiclesSnap.size;
+      }
+      setTotalVehicles(vehicleCount);
+    } catch (e: any) {
+      console.error("Error fetching data:", e);
+      setError("Failed to fetch dashboard data");
+      toast.error("Couldn't fetch information");
+    } finally {
+      setLoading(false);
     }
   };
+
   useEffect(() => {
     fetchdealers();
   }, []);
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+        <CircularProgress size={60} />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ padding: 4 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      </Box>
+    );
+  }
+
   return (
     <Box
       sx={{
@@ -42,38 +84,7 @@ function AdminPage() {
         Welcome to Admin Panel
       </Typography>
       <Grid container spacing={4}>
-        {/* Name */}
-        {/* <Grid item xs={12} sm={6} md={4}>
-          <Paper
-            sx={{
-              padding: 4,
-              textAlign: "center",
-              borderRadius: "16px",
-              boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
-              background: "linear-gradient(145deg, #e0e0e0, #ffffff)",
-              ":hover": {
-                transform: "scale(1.05)",
-                transition: "0.3s ease-in-out",
-              },
-              height: 160,
-            }}
-          >
-            <Typography
-              variant="h6"
-              fontWeight="bold"
-              color="primary"
-              gutterBottom
-            >
-              Name
-            </Typography>
-            <Typography variant="h5" sx={{ color: "#333" }}>
-              {name || "N/A"}
-            </Typography>
-          </Paper>
-        </Grid> */}
-
-        {/* Email */}
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={3}>
           <Paper
             sx={{
               padding: 4,
@@ -96,12 +107,12 @@ function AdminPage() {
             >
               Logged In as
             </Typography>
-            <Typography variant="h5" sx={{ color: "#333" }}>
+            <Typography variant="h6" sx={{ color: "#333" }}>
               {email || "N/A"}
             </Typography>
           </Paper>
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={3}>
           <Paper
             sx={{
               padding: 4,
@@ -122,10 +133,66 @@ function AdminPage() {
               color="primary"
               gutterBottom
             >
-              Total Registered Car Dealers
+              Total Admins
             </Typography>
-            <Typography variant="h5" sx={{ color: "#333" }}>
+            <Typography variant="h3" fontWeight="bold" sx={{ color: "#1976d2" }}>
+              {totalAdmins}
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper
+            sx={{
+              padding: 4,
+              textAlign: "center",
+              borderRadius: "16px",
+              boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+              background: "linear-gradient(145deg, #e0e0e0, #ffffff)",
+              ":hover": {
+                transform: "scale(1.05)",
+                transition: "0.3s ease-in-out",
+              },
+              height: 160,
+            }}
+          >
+            <Typography
+              variant="h6"
+              fontWeight="bold"
+              color="primary"
+              gutterBottom
+            >
+              Total Car Dealers
+            </Typography>
+            <Typography variant="h3" fontWeight="bold" sx={{ color: "#1976d2" }}>
               {registeredDealers}
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper
+            sx={{
+              padding: 4,
+              textAlign: "center",
+              borderRadius: "16px",
+              boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+              background: "linear-gradient(145deg, #e0e0e0, #ffffff)",
+              ":hover": {
+                transform: "scale(1.05)",
+                transition: "0.3s ease-in-out",
+              },
+              height: 160,
+            }}
+          >
+            <Typography
+              variant="h6"
+              fontWeight="bold"
+              color="primary"
+              gutterBottom
+            >
+              Total Vehicles
+            </Typography>
+            <Typography variant="h3" fontWeight="bold" sx={{ color: "#1976d2" }}>
+              {totalVehicles}
             </Typography>
           </Paper>
         </Grid>

@@ -10,6 +10,8 @@ import {
   TableBody,
   Paper,
   Typography,
+  CircularProgress,
+  Box,
 } from "@mui/material";
 import { collection, deleteDoc, doc, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
@@ -44,10 +46,39 @@ function BaseTable() {
     enabled: !!info.uid, // Ensure the query runs only if `info.uid` is defined
     staleTime: 2 * 60 * 1000,
   });
-  if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error fetching vehicles</div>;
+  if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
-  if (vehicles?.length == 0) return <Typography>No Vehicles Yet</Typography>;
+  if (isError) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography color="error" variant="h6">
+          Error fetching vehicles
+        </Typography>
+        <Typography color="text.secondary" variant="body2">
+          {error?.message || "An unexpected error occurred"}
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (vehicles?.length === 0) {
+    return (
+      <Paper sx={{ p: 4, textAlign: "center" }}>
+        <Typography variant="h6" color="text.secondary">
+          No vehicles found
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          Add your first vehicle to get started
+        </Typography>
+      </Paper>
+    );
+  }
   return (
     <TableContainer component={Paper}>
       <Table>
