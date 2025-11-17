@@ -75,14 +75,25 @@ export default function DealerAdminPanel({
       <List>
         <ListItem
           component={Link}
-          href="/admin_panel/create_dealers_account"
+          href="/admin_panel"
           sx={{
             "&:hover": {
-              backgroundColor: "#374151", // Tailwind's gray-700
+              backgroundColor: "#374151",
             },
           }}
         >
-          <ListItemText primary="Create Dealers Accounts" />
+          <ListItemText primary="Dashboard" />
+        </ListItem>
+        <ListItem
+          component={Link}
+          href="/analytics"
+          sx={{
+            "&:hover": {
+              backgroundColor: "#374151",
+            },
+          }}
+        >
+          <ListItemText primary="Analytics" />
         </ListItem>
         <ListItem
           component={Link}
@@ -97,6 +108,17 @@ export default function DealerAdminPanel({
         </ListItem>
         <ListItem
           component={Link}
+          href="/admin_panel/create_dealers_account"
+          sx={{
+            "&:hover": {
+              backgroundColor: "#374151",
+            },
+          }}
+        >
+          <ListItemText primary="Create Dealer Account" />
+        </ListItem>
+        <ListItem
+          component={Link}
           href="/admin_panel/create_admin"
           sx={{
             "&:hover": {
@@ -105,6 +127,17 @@ export default function DealerAdminPanel({
           }}
         >
           <ListItemText primary="Create Admin" />
+        </ListItem>
+        <ListItem
+          component={Link}
+          href="/admin_panel/seed-database"
+          sx={{
+            "&:hover": {
+              backgroundColor: "#374151",
+            },
+          }}
+        >
+          <ListItemText primary="Seed Database" />
         </ListItem>
         <ListItem
           component={Link}
