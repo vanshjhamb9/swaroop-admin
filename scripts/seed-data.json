@@ -1,0 +1,128 @@
+{
+  "superAdmin": {
+    "uid": "bpzPUAg2wLZz4eljAwGFyZ0f6yF2",
+    "email": "superadmin@car360.com",
+    "name": "Super Admin",
+    "password": "SuperAdmin123"
+  },
+  "admins": [
+    {
+      "email": "admin1@car360.com",
+      "name": "John Administrator",
+      "password": "Admin123"
+    },
+    {
+      "email": "admin2@car360.com",
+      "name": "Sarah Admin",
+      "password": "Admin123"
+    }
+  ],
+  "dealers": [
+    {
+      "email": "dealer1@car360.com",
+      "name": "Elite Auto Sales",
+      "password": "Dealer123",
+      "contactDetails": "+91-9876543210, Mumbai, India",
+      "vehicles": [
+        {
+          "name": "Mercedes-Benz C-Class",
+          "model": "C 220d",
+          "registration": "MH-02-AB-1234"
+        },
+        {
+          "name": "BMW 3 Series",
+          "model": "320d Sport",
+          "registration": "MH-02-CD-5678"
+        },
+        {
+          "name": "Audi A4",
+          "model": "Premium Plus",
+          "registration": "MH-02-EF-9012"
+        }
+      ]
+    },
+    {
+      "email": "dealer2@car360.com",
+      "name": "Premium Motors",
+      "password": "Dealer123",
+      "contactDetails": "+91-9876543211, Delhi, India",
+      "vehicles": [
+        {
+          "name": "Honda City",
+          "model": "VX CVT",
+          "registration": "DL-01-AB-1111"
+        },
+        {
+          "name": "Toyota Fortuner",
+          "model": "Legender 4x4",
+          "registration": "DL-01-CD-2222"
+        }
+      ]
+    },
+    {
+      "email": "dealer3@car360.com",
+      "name": "Luxury Car Hub",
+      "password": "Dealer123",
+      "contactDetails": "+91-9876543212, Bangalore, India",
+      "vehicles": [
+        {
+          "name": "Jaguar XE",
+          "model": "S Diesel",
+          "registration": "KA-03-AB-3333"
+        },
+        {
+          "name": "Range Rover Evoque",
+          "model": "SE Diesel",
+          "registration": "KA-03-CD-4444"
+        },
+        {
+          "name": "Volvo XC90",
+          "model": "D5 Inscription",
+          "registration": "KA-03-EF-5555"
+        },
+        {
+          "name": "Porsche Macan",
+          "model": "S Diesel",
+          "registration": "KA-03-GH-6666"
+        }
+      ]
+    }
+  ],
+  "customers": [
+    {
+      "email": "customer1@gmail.com",
+      "name": "Rajesh Kumar",
+      "password": "Customer123",
+      "planType": "prepaid",
+      "creditBalance": 5000
+    },
+    {
+      "email": "customer2@gmail.com",
+      "name": "Priya Sharma",
+      "password": "Customer123",
+      "planType": "prepaid",
+      "creditBalance": 3500
+    },
+    {
+      "email": "customer3@gmail.com",
+      "name": "Amit Patel",
+      "password": "Customer123",
+      "planType": "postpaid",
+      "creditBalance": 8000
+    },
+    {
+      "email": "customer4@gmail.com",
+      "name": "Neha Singh",
+      "password": "Customer123",
+      "planType": "prepaid",
+      "creditBalance": 1200
+    },
+    {
+      "email": "customer5@gmail.com",
+      "name": "Vikram Reddy",
+      "password": "Customer123",
+      "planType": "postpaid",
+      "creditBalance": 12000
+    }
+  ]
+}
