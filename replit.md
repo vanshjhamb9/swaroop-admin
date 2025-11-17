@@ -161,6 +161,53 @@ All routes implement token-based authentication using Firebase Admin SDK
 - PhonePe payment gateway credentials (merchant ID, salt key)
 - Zoho Books API credentials (client ID, secret, refresh token)
 
+## Setup Instructions
+
+### Firebase Configuration Required
+
+The application requires Firebase Admin SDK credentials to be configured in the `.env` file. You need to:
+
+1. Go to your Firebase Console → Project Settings → Service Accounts
+2. Click "Generate New Private Key" to download the JSON file
+3. Copy the values from the JSON file to your `.env` file:
+
+```env
+FIREBASE_ADMIN_TYPE=service_account
+FIREBASE_ADMIN_PROJECT_ID=your-project-id
+FIREBASE_ADMIN_PRIVATE_KEY_ID=your-private-key-id
+FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nyour-private-key-here\n-----END PRIVATE KEY-----\n"
+FIREBASE_ADMIN_CLIENT_EMAIL=firebase-adminsdk@your-project-id.iam.gserviceaccount.com
+FIREBASE_ADMIN_CLIENT_ID=your-client-id
+FIREBASE_ADMIN_AUTH_URI=https://accounts.google.com/o/oauth2/auth
+FIREBASE_ADMIN_TOKEN_URI=https://oauth2.googleapis.com/token
+FIREBASE_ADMIN_AUTH_PROVIDER_CERT_URL=https://www.googleapis.com/oauth2/v1/certs
+FIREBASE_ADMIN_CLIENT_CERT_URL=https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk%40your-project-id.iam.gserviceaccount.com
+FIREBASE_ADMIN_UNIVERSE_DOMAIN=googleapis.com
+FIREBASE_API_KEY=your-firebase-web-api-key
+```
+
+4. See `.env.example` for a complete list of required environment variables
+
+### Seeding Test Data
+
+After configuring Firebase credentials, you can seed the database with test data:
+
+**Via Admin Panel UI:**
+- Navigate to `/admin_panel/seed-database` (requires Super Admin access)
+- Click "Seed Database" button
+- View results and login credentials for test accounts
+
+**Via API:**
+- Send a POST request to `/api/seed`
+- Returns detailed results including test account credentials
+
+The seed operation creates:
+- 1 Super Admin
+- 2 Additional Admins  
+- 3 Dealers with 9 total vehicles
+- 5 Customers with credit history and transactions
+- Sample payment records
+
 ## Recent Changes (November 17, 2025)
 
 ### New Authentication & User Management APIs
