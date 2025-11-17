@@ -15,14 +15,11 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Next.js Development Server"
+args = "Start Game"
 
 [[workflows.workflow]]
-name = "Next.js Development Server"
+name = "Start Game"
 author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
@@ -36,3 +33,4 @@ externalPort = 80
 [deployment]
 deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
+run = ["npm", "run", "start"]

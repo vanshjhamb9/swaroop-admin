@@ -1,11 +1,203 @@
 # API Documentation - Car360 Credit System
 
+## Environment Setup
+
+### Required Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```bash
+# PhonePe Payment Gateway (Sandbox for testing)
+PHONEPE_MERCHANT_ID=MERCHANTUAT
+PHONEPE_SALT_KEY=099eb0cd-02cf-4e2a-8aca-3e6c6aff0399
+PHONEPE_SALT_INDEX=1
+PHONEPE_API_URL=https://api-preprod.phonepe.com/apis/pg-sandbox
+
+# Zoho Books Integration
+ZOHO_CLIENT_ID=your-zoho-client-id
+ZOHO_CLIENT_SECRET=your-zoho-client-secret
+ZOHO_REFRESH_TOKEN=your-zoho-refresh-token
+ZOHO_ORGANIZATION_ID=your-zoho-organization-id
+
+# Application
+NEXT_PUBLIC_BASE_URL=http://localhost:5000
+```
+
+For production, update these values with your actual credentials from PhonePe and Zoho dashboards.
+
 ## Authentication
 
-All API routes require Firebase Auth token in the Authorization header:
+All API routes (except login and register) require Firebase Auth token in the Authorization header:
 ```
 Authorization: Bearer <firebase-id-token>
 ```
+
+## Authentication & User Management APIs
+
+### 1. Register User
+**POST** `/api/auth/register`
+
+Register a new customer account. **Requires admin authentication.**
+
+**Headers:**
+```
+Authorization: Bearer <admin-firebase-token>
+```
+
+**Request Body:**
+```json
+{
+  "email": "customer@example.com",
+  "password": "securePassword123",
+  "name": "John Doe",
+  "phone": "+911234567890",
+  "planType": "prepaid"
+}
+```
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "uid": "user123",
+    "email": "customer@example.com",
+    "name": "John Doe",
+    "role": "customer",
+    "planType": "prepaid"
+  }
+}
+```
+
+**Error Responses:**
+- `400`: Missing required fields
+- `401`: Missing or invalid authorization header
+- `403`: Admin access required
+- `409`: User with email already exists
+
+---
+
+### 2. Login
+**POST** `/api/auth/login`
+
+Authenticate user credentials and get Firebase tokens. This endpoint verifies the password using Firebase Authentication REST API and returns tokens for client-side authentication.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "userPassword123"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "customToken": "firebase-custom-token-here",
+    "idToken": "firebase-id-token-here",
+    "refreshToken": "firebase-refresh-token-here",
+    "user": {
+      "uid": "user123",
+      "email": "user@example.com",
+      "name": "John Doe",
+      "phone": "+911234567890",
+      "role": "customer",
+      "planType": "prepaid",
+      "creditBalance": 500
+    }
+  }
+}
+```
+
+**Error Responses:**
+- `400`: Missing email or password
+- `401`: Invalid credentials (wrong email or password)
+- `500`: Server error
+
+**Note:** This endpoint properly verifies the password using Firebase Authentication. Use the returned `idToken` for immediate authentication or `customToken` with Firebase's `signInWithCustomToken()` on the client side.
+
+---
+
+### 3. Get User Profile
+**GET** `/api/user/profile`
+
+Get authenticated user's profile information.
+
+**Headers:**
+```
+Authorization: Bearer <firebase-id-token>
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "userId": "user123",
+    "name": "John Doe",
+    "email": "user@example.com",
+    "phone": "+911234567890",
+    "role": "customer",
+    "planType": "prepaid",
+    "creditBalance": 500,
+    "createdAt": "2025-01-01T00:00:00.000Z",
+    "updatedAt": "2025-01-15T12:30:00.000Z"
+  }
+}
+```
+
+**Error Responses:**
+- `401`: Missing or invalid authorization header
+- `500`: Server error
+
+---
+
+### 4. Get All Users (Admin Only)
+**GET** `/api/users?limit=50&startAfter=user123`
+
+Get paginated list of all users. **Requires admin authentication.**
+
+**Headers:**
+```
+Authorization: Bearer <admin-firebase-token>
+```
+
+**Query Parameters:**
+- `limit` (optional): Number of users to return (default: 50)
+- `startAfter` (optional): User ID to start after for pagination
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "users": [
+      {
+        "userId": "user123",
+        "name": "John Doe",
+        "email": "user@example.com",
+        "phone": "+911234567890",
+        "role": "customer",
+        "planType": "prepaid",
+        "creditBalance": 500,
+        "createdAt": "2025-01-01T00:00:00.000Z",
+        "updatedAt": "2025-01-15T12:30:00.000Z"
+      }
+    ],
+    "total": 150,
+    "limit": 50,
+    "hasMore": true
+  }
+}
+```
+
+**Error Responses:**
+- `401`: Missing or invalid authorization header
+- `403`: Admin access required
+
+---
 
 ## Credit System APIs
 

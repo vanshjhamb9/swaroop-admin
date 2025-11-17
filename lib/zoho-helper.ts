@@ -32,6 +32,10 @@ async function getAccessToken(): Promise<string> {
   accessToken = data.access_token;
   tokenExpiry = Date.now() + (data.expires_in * 1000) - 60000;
   
+  if (!accessToken) {
+    throw new Error('Failed to obtain access token from Zoho');
+  }
+  
   return accessToken;
 }
 

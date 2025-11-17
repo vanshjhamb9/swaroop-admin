@@ -40,10 +40,33 @@ Preferred communication style: Simple, everyday language.
 ### Backend Architecture
 
 **Serverless API**: Next.js API Routes
+
+*Authentication & User Management:*
+- `/api/auth/register` - Register new customer accounts (admin-only)
+- `/api/auth/login` - Authenticate users with password verification
+- `/api/user/profile` - Get authenticated user profile
+- `/api/users` - List all users with pagination (admin-only)
 - `/api/createAdmin` - Creates admin accounts with custom claims
 - `/api/createDealerAdmin` - Creates dealer admin accounts
 - `/api/verifyAdmin` - Verifies admin privileges
-- All routes implement token-based authentication using Firebase Admin SDK
+
+*Credit System:*
+- `/api/credit/balance` - Get user credit balance
+- `/api/credit/transactions` - Get transaction history with pagination
+- `/api/credit/add` - Add credits manually (admin or self)
+- `/api/credit/deduct` - Deduct credits from account
+
+*Payment Integration:*
+- `/api/payment/phonepe/initiate` - Initiate PhonePe payment
+- `/api/payment/phonepe/webhook` - Handle PhonePe payment callbacks
+
+*Invoice Generation:*
+- `/api/invoice/zoho/generate` - Generate and send Zoho invoices
+
+*Analytics:*
+- `/api/analytics/stats` - Get system analytics (admin-only)
+
+All routes implement token-based authentication using Firebase Admin SDK
 
 **Authentication & Authorization**:
 - Firebase Authentication for user management
@@ -138,7 +161,31 @@ Preferred communication style: Simple, everyday language.
 - PhonePe payment gateway credentials (merchant ID, salt key)
 - Zoho Books API credentials (client ID, secret, refresh token)
 
-## Recent Changes (November 2025)
+## Recent Changes (November 17, 2025)
+
+### New Authentication & User Management APIs
+Added comprehensive authentication system:
+- **Register API** (`POST /api/auth/register`) - Admin-controlled customer registration with plan type selection
+- **Login API** (`POST /api/auth/login`) - Secure password verification using Firebase REST API, returns custom and ID tokens
+- **User Profile API** (`GET /api/user/profile`) - Retrieve authenticated user's complete profile
+- **Get All Users API** (`GET /api/users`) - Admin endpoint for paginated user listing
+
+**Security Enhancements:**
+- Implemented `lib/auth-helper.ts` middleware for consistent token verification across routes
+- Login endpoint properly validates passwords before issuing tokens (uses Firebase signInWithPassword REST API)
+- All new endpoints follow existing authentication patterns with proper error handling
+
+**Environment Configuration:**
+- Added `.env.example` with all required environment variables
+- Configured dummy/test values for PhonePe (sandbox) and Zoho integrations
+- Added `FIREBASE_API_KEY` for password verification in login endpoint
+
+**Documentation:**
+- Updated `API_DOCUMENTATION.md` with detailed specs for all new endpoints
+- Included request/response examples, error codes, and authentication requirements
+- Added environment setup section with configuration instructions
+
+## Previous Changes (November 2025)
 
 ### Credit System Implementation
 Added comprehensive credit management system with:
