@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import AWS from "aws-sdk";
 import { getStorage, ref, listAll, getDownloadURL } from "firebase/storage";
 import { storage } from "@/firebase";
 import useVehicleStore from "@/store/dealersPanel/Vehiclestore";
