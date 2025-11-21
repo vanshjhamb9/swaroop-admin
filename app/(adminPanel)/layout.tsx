@@ -15,7 +15,7 @@ import {
 import MenuIcon from "@mui/icons-material/Menu"; // Material-UI hamburger icon
 import Header from "@/components/Header/DealersPanelHeader";
 import { onAuthStateChanged } from "firebase/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { auth } from "@/firebase";
 import { toast } from "react-toastify";
 import { LoaderIcon } from "react-hot-toast";
@@ -33,6 +33,7 @@ export default function DealerAdminPanel({
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [mobileOpen, setMobileOpen] = useState(false); // State for mobile drawer
   const router = useRouter();
+  const pathname = usePathname();
   const { setinfo } = useAdminOwnerStore();
 
   useEffect(() => {
@@ -46,18 +47,22 @@ export default function DealerAdminPanel({
           setinfo({ email: user.email!, name: "", uid: user.uid });
         } else {
           setIsAdmin(false);
-          router.replace("/admin_panel/Authenticate");
-          toast.error("Unauthorized");
+          if (pathname !== "/admin_panel/Authenticate") {
+            router.replace("/admin_panel/Authenticate");
+            toast.error("Unauthorized");
+          }
         }
       } catch (e) {
         setIsAdmin(false);
-        toast.error("Unauthorized Email");
-        router.replace("/admin_panel/Authenticate");
+        if (pathname !== "/admin_panel/Authenticate") {
+          toast.error("Unauthorized Email");
+          router.replace("/admin_panel/Authenticate");
+        }
       } finally {
         setLoading(false);
       }
     });
-  }, []);
+  }, [pathname]);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
