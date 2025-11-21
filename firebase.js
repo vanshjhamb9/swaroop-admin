@@ -9,13 +9,15 @@ import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBsz7bMlHbAt320x0-IS4ZopZEzW-B70RY",
-  authDomain: "car360-8eee0.firebaseapp.com",
-  projectId: "car360-8eee0",
-  storageBucket: "car360-8eee0.firebasestorage.app",
-  messagingSenderId: "404227251099",
-  appId: "1:404227251099:web:6c03baeb010ba09dc91f3e"
+  apiKey: "AIzaSyCRcKVtYYVz50TN9JhXBEVo9vECDkSJ6ik",
+  authDomain: "swaroop-a03d9.firebaseapp.com",
+  projectId: "swaroop-a03d9",
+  storageBucket: "swaroop-a03d9.firebasestorage.app",
+  messagingSenderId: "498150212901",
+  appId: "1:498150212901:web:965dccb08962c3751606cc",
+  measurementId: "G-JWRN3H2NLX"
 };
+
 
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);

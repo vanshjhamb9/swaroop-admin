@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Fetch all data in parallel
     const [usersSnapshot, paymentsSnapshot, dealersSnapshot] = await Promise.all([
       adminFirestore.collection('users').get(),
       adminFirestore.collection('payments').where('status', '==', 'success').get(),
@@ -39,39 +40,58 @@ export async function GET(request: NextRequest) {
       const data = doc.data();
       totalRevenue += data.amount || 0;
       
-      const date = new Date(data.timestamp).toISOString().split('T')[0];
+      // Handle Firestore Timestamp
+      let date: string;
+      if (data.timestamp && data.timestamp.toDate) {
+        date = data.timestamp.toDate().toISOString().split('T')[0];
+      } else if (data.timestamp) {
+        date = new Date(data.timestamp).toISOString().split('T')[0];
+      } else {
+        date = new Date().toISOString().split('T')[0];
+      }
+      
       paymentsByDate[date] = (paymentsByDate[date] || 0) + (data.amount || 0);
     });
 
     const revenueByDate = Object.entries(paymentsByDate)
       .map(([date, amount]) => ({ date, amount }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+      .sort((a, b) => b.date.localeCompare(a.date)); // Most recent first
 
+    // Get top users by spending
     const topUsers: any[] = [];
-    for (const doc of usersSnapshot.docs) {
+    
+    // Process users in batches to avoid overwhelming Firestore
+    const userDocs = usersSnapshot.docs;
+    
+    for (const doc of userDocs) {
       const userId = doc.id;
       const userData = doc.data();
       
-      const userTransactionsSnapshot = await adminFirestore
-        .collection('users')
-        .doc(userId)
-        .collection('transactions')
-        .where('type', '==', 'debit')
-        .get();
+      try {
+        const userTransactionsSnapshot = await adminFirestore
+          .collection('users')
+          .doc(userId)
+          .collection('transactions')
+          .where('type', '==', 'debit')
+          .get();
 
-      let totalSpent = 0;
-      userTransactionsSnapshot.forEach(txDoc => {
-        totalSpent += txDoc.data().amount || 0;
-      });
-
-      if (totalSpent > 0) {
-        topUsers.push({
-          userId,
-          name: userData.name || 'Unknown',
-          email: userData.email || '',
-          totalSpent,
-          transactionCount: userTransactionsSnapshot.size
+        let totalSpent = 0;
+        userTransactionsSnapshot.forEach(txDoc => {
+          totalSpent += txDoc.data().amount || 0;
         });
+
+        if (totalSpent > 0) {
+          topUsers.push({
+            userId,
+            name: userData.name || 'Unknown',
+            email: userData.email || '',
+            totalSpent,
+            transactionCount: userTransactionsSnapshot.size
+          });
+        }
+      } catch (err) {
+        console.error(`Error fetching transactions for user ${userId}:`, err);
+        // Continue with other users
       }
     }
 

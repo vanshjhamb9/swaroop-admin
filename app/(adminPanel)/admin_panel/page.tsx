@@ -1,10 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Paper, Grid, CircularProgress, Alert } from "@mui/material";
-import useOwnersStore from "@/store/dealersPanel/OwnersInfo";
 import useAdminOwnerStore from "@/store/adminPanel/AdminOwnersInfo";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/firebase";
+import { getAuth } from "firebase/auth";
 import { toast } from "react-toastify";
 
 function AdminPage() {
@@ -22,23 +20,40 @@ function AdminPage() {
       setLoading(true);
       setError(null);
       
-      const [dealersSnap, adminsSnap] = await Promise.all([
-        getDocs(collection(db, "dealers")),
-        getDocs(collection(db, "admins"))
-      ]);
-
-      setregisteredDealers(dealersSnap.docs.length);
-      setTotalAdmins(adminsSnap.docs.length);
-
-      let vehicleCount = 0;
-      for (const dealerDoc of dealersSnap.docs) {
-        const vehiclesSnap = await getDocs(collection(db, "dealers", dealerDoc.id, "vehicles"));
-        vehicleCount += vehiclesSnap.size;
+      // Get auth token
+      const auth = getAuth();
+      const user = auth.currentUser;
+      
+      if (!user) {
+        setError('Not authenticated');
+        return;
       }
-      setTotalVehicles(vehicleCount);
+
+      const token = await user.getIdToken();
+      
+      // Call API endpoint instead of using client SDK
+      const response = await fetch('/api/admin/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        setTotalAdmins(result.data.totalAdmins);
+        setregisteredDealers(result.data.totalDealers);
+        setTotalVehicles(result.data.totalVehicles);
+      } else {
+        throw new Error(result.error || 'Failed to fetch data');
+      }
     } catch (e: any) {
       console.error("Error fetching data:", e);
-      setError("Failed to fetch dashboard data");
+      setError(e.message || "Failed to fetch dashboard data");
       toast.error("Couldn't fetch information");
     } finally {
       setLoading(false);
@@ -48,6 +63,7 @@ function AdminPage() {
   useEffect(() => {
     fetchdealers();
   }, []);
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">

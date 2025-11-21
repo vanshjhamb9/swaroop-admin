@@ -1,38 +1,79 @@
-// pages/api/firebaseAdmin.js
+import * as admin from 'firebase-admin';
 
-import admin from "firebase-admin";
-// const admin = require("firebase-admin");
+// Singleton pattern to prevent multiple initializations
+let app;
+let db;
+let auth;
 
-// Initialize Firebase Admin SDK once (Singleton pattern) - server-side only
-if (!admin.apps.length) {
-    admin.initializeApp({
-        credential: admin.credential.cert({
-            type: process.env.FIREBASE_ADMIN_TYPE,
-            project_id: process.env.FIREBASE_ADMIN_PROJECT_ID,
-            private_key_id: process.env.FIREBASE_ADMIN_PRIVATE_KEY_ID,
-            private_key: process.env.FIREBASE_ADMIN_PRIVATE_KEY.replace(/\\n/g, '\n'), // Replace escaped newline characters
-            client_email: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-            client_id: process.env.FIREBASE_ADMIN_CLIENT_ID,
-            auth_uri: process.env.FIREBASE_ADMIN_AUTH_URI,
-            token_uri: process.env.FIREBASE_ADMIN_TOKEN_URI,
-            auth_provider_x509_cert_url: process.env.FIREBASE_ADMIN_AUTH_PROVIDER_CERT_URL,
-            client_x509_cert_url: process.env.FIREBASE_ADMIN_CLIENT_CERT_URL,
-            universe_domain: process.env.FIREBASE_ADMIN_UNIVERSE_DOMAIN
-        }),
+function initializeFirebaseAdmin() {
+  // Check if already initialized
+  if (admin.apps.length > 0) {
+    console.log('✅ Firebase Admin already initialized');
+    app = admin.apps[0];
+    db = admin.firestore();
+    auth = admin.auth();
+    return { app, db, auth };
+  }
+
+  console.log('🔧 Initializing Firebase Admin...');
+
+  // Initialize the app
+  try {
+    // Build service account from individual environment variables
+    const serviceAccount = {
+      type: process.env.FIREBASE_ADMIN_TYPE,
+      project_id: process.env.FIREBASE_ADMIN_PROJECT_ID,
+      private_key_id: process.env.FIREBASE_ADMIN_PRIVATE_KEY_ID,
+      private_key: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      client_email: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+      client_id: process.env.FIREBASE_ADMIN_CLIENT_ID,
+      auth_uri: process.env.FIREBASE_ADMIN_AUTH_URI,
+      token_uri: process.env.FIREBASE_ADMIN_TOKEN_URI,
+      auth_provider_x509_cert_url: process.env.FIREBASE_ADMIN_AUTH_PROVIDER_CERT_URL,
+      client_x509_cert_url: process.env.FIREBASE_ADMIN_CLIENT_CERT_URL,
+      universe_domain: process.env.FIREBASE_ADMIN_UNIVERSE_DOMAIN,
+    };
+
+    // Validate required fields
+    if (!serviceAccount.project_id || !serviceAccount.private_key || !serviceAccount.client_email) {
+      throw new Error('Missing required Firebase Admin credentials. Check your .env file.');
+    }
+
+    console.log('📝 Project ID:', serviceAccount.project_id);
+    console.log('📧 Client Email:', serviceAccount.client_email);
+
+    app = admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+      // Explicitly set the database URL
+      databaseURL: `https://${process.env.FIREBASE_ADMIN_PROJECT_ID}.firebaseio.com`
     });
+
+    // Get Firestore instance
+    db = admin.firestore();
+
+    // Configure Firestore settings ONLY on first initialization
+    db.settings({
+      ignoreUndefinedProperties: true,
+      // Ensure we're using the correct host
+      host: 'firestore.googleapis.com',
+      ssl: true
+    });
+
+    // Get Auth instance
+    auth = admin.auth();
+
+    console.log('✅ Firebase Admin initialized successfully');
+    console.log('🔥 Firestore connected to project:', process.env.FIREBASE_ADMIN_PROJECT_ID);
+  } catch (error) {
+    console.error('❌ Error initializing Firebase Admin:', error);
+    throw error;
+  }
+
+  return { app, db, auth };
 }
 
-// async function assignSuperAdmin(uid) {
-//     try {
-//         await admin.auth().setCustomUserClaims(uid, { admin: true });
-//         console.log(`Admin claim assigned to user with UID: ${uid}`);
-//     } catch (error) {
-//         console.error("Error assigning admin claim:", error);
-//     }
-// }
+// Initialize once
+const { app: adminApp, db: adminFirestore, auth: adminAuth } = initializeFirebaseAdmin();
 
-// // Call the function with the Super Admin's UID
-// const superAdminUID = "bpzPUAg2wLZz4eljAwGFyZ0f6yF2"; // Replace with your Super Admin's UID
-// assignSuperAdmin(superAdminUID);
-export const adminAuth = admin.auth();
-export const adminFirestore = admin.firestore();
+export { adminApp, adminFirestore, adminAuth };
