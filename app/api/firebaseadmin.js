@@ -41,6 +41,9 @@ function initializeFirebaseAdmin() {
 
     console.log('📝 Project ID:', serviceAccount.project_id);
     console.log('📧 Client Email:', serviceAccount.client_email);
+    console.log('🔑 Private Key Length:', process.env.FIREBASE_ADMIN_PRIVATE_KEY?.length || 'undefined');
+    console.log('🔑 Private Key Starts:', process.env.FIREBASE_ADMIN_PRIVATE_KEY?.substring(0, 50));
+    console.log('🔑 Private Key Ends:', process.env.FIREBASE_ADMIN_PRIVATE_KEY?.substring(-50));
 
     app = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
