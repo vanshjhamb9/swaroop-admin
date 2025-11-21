@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyAuthToken, requireAdmin } from '@/lib/auth-helper';
-import { adminFirestore } from '../firebaseadmin';
+import { adminFirestore } from '../../../firebaseadmin';
 
 export async function GET(request: NextRequest) {
   try {
