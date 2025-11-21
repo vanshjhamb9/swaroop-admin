@@ -1,36 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminFirestore } from '../../firebaseadmin';
+import { verifyAuthToken, requireAdmin } from '@/lib/auth-helper';
+import { adminFirestore } from '../firebaseadmin';
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
-        { status: 401 }
-      );
-    }
+    const decodedToken = await verifyAuthToken(request);
+    requireAdmin(decodedToken);
 
-    const token = authHeader.split('Bearer ')[1];
-    const decodedToken = await adminAuth.verifyIdToken(token);
-
-    if (!decodedToken.admin) {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
-
-    const [adminsSnapshot, dealersSnapshot, vehiclesSnapshot] = await Promise.all([
+    const [adminsSnapshot, dealersSnapshot] = await Promise.all([
       adminFirestore.collection('admins').get(),
-      adminFirestore.collection('dealers').get(),
-      adminFirestore.collection('vehicles').get()
+      adminFirestore.collection('dealers').get()
     ]);
 
     const totalAdmins = adminsSnapshot.size;
     const totalDealers = dealersSnapshot.size;
-    const totalVehicles = vehiclesSnapshot.size;
+
+    let totalVehicles = 0;
+    for (const dealerDoc of dealersSnapshot.docs) {
+      const vehiclesSnapshot = await adminFirestore
+        .collection('dealers')
+        .doc(dealerDoc.id)
+        .collection('vehicles')
+        .get();
+      totalVehicles += vehiclesSnapshot.size;
+    }
 
     return NextResponse.json({
       success: true,
@@ -43,8 +36,23 @@ export async function GET(request: NextRequest) {
     
   } catch (error: any) {
     console.error('Error fetching dashboard data:', error);
+    
+    if (error.message === 'Admin access required') {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 403 }
+      );
+    }
+    
+    if (error.message === 'Missing or invalid authorization header') {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to fetch dashboard data', details: error.message },
+      { success: false, error: 'Failed to fetch dashboard data' },
       { status: 500 }
     );
   }
