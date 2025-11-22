@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     const paymentsByDate: Record<string, number> = {};
     const transactionCount = paymentsSnapshot.size;
 
-    paymentsSnapshot.forEach(doc => {
+    paymentsSnapshot.forEach((doc: any) => {
       const data = doc.data();
       totalRevenue += data.amount || 0;
       
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
           .get();
 
         let totalSpent = 0;
-        userTransactionsSnapshot.forEach(txDoc => {
+        userTransactionsSnapshot.forEach((txDoc: any) => {
           totalSpent += txDoc.data().amount || 0;
         });
 
