@@ -7,22 +7,39 @@ export async function GET(request: NextRequest) {
     const decodedToken = await verifyAuthToken(request);
     requireAdmin(decodedToken);
 
-    const [adminsSnapshot, dealersSnapshot] = await Promise.all([
-      adminFirestore.collection('admins').get(),
-      adminFirestore.collection('dealers').get()
-    ]);
+    let adminsSnapshot, dealersSnapshot;
+    
+    try {
+      adminsSnapshot = await adminFirestore.collection('admins').get();
+    } catch (err) {
+      console.warn('Admins collection not accessible, using empty set');
+      adminsSnapshot = { size: 0, docs: [] } as any;
+    }
+    
+    try {
+      dealersSnapshot = await adminFirestore.collection('dealers').get();
+    } catch (err) {
+      console.warn('Dealers collection not accessible, using empty set');
+      dealersSnapshot = { size: 0, docs: [] } as any;
+    }
 
-    const totalAdmins = adminsSnapshot.size;
-    const totalDealers = dealersSnapshot.size;
+    const totalAdmins = adminsSnapshot.size || 0;
+    const totalDealers = dealersSnapshot.size || 0;
 
     let totalVehicles = 0;
-    for (const dealerDoc of dealersSnapshot.docs) {
-      const vehiclesSnapshot = await adminFirestore
-        .collection('dealers')
-        .doc(dealerDoc.id)
-        .collection('vehicles')
-        .get();
-      totalVehicles += vehiclesSnapshot.size;
+    if (dealersSnapshot.docs && Array.isArray(dealersSnapshot.docs)) {
+      for (const dealerDoc of dealersSnapshot.docs) {
+        try {
+          const vehiclesSnapshot = await adminFirestore
+            .collection('dealers')
+            .doc(dealerDoc.id)
+            .collection('vehicles')
+            .get();
+          totalVehicles += vehiclesSnapshot.size;
+        } catch (err) {
+          console.warn(`Could not fetch vehicles for dealer ${dealerDoc.id}`);
+        }
+      }
     }
 
     return NextResponse.json({

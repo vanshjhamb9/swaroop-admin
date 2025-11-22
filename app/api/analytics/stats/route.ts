@@ -22,12 +22,28 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch all data in parallel
-    const [usersSnapshot, paymentsSnapshot, dealersSnapshot] = await Promise.all([
-      adminFirestore.collection('users').get(),
-      adminFirestore.collection('payments').where('status', '==', 'success').get(),
-      adminFirestore.collection('dealers').get()
-    ]);
+    // Fetch all data in parallel with error handling
+    let usersSnapshot, paymentsSnapshot, dealersSnapshot;
+    try {
+      usersSnapshot = await adminFirestore.collection('users').get();
+    } catch (err) {
+      console.warn('Users collection not found or inaccessible, using empty set');
+      usersSnapshot = { size: 0, docs: [], forEach: () => {} } as any;
+    }
+    
+    try {
+      paymentsSnapshot = await adminFirestore.collection('payments').where('status', '==', 'success').get();
+    } catch (err) {
+      console.warn('Payments collection not found or inaccessible, using empty set');
+      paymentsSnapshot = { size: 0, docs: [], forEach: () => {} } as any;
+    }
+    
+    try {
+      dealersSnapshot = await adminFirestore.collection('dealers').get();
+    } catch (err) {
+      console.warn('Dealers collection not found or inaccessible, using empty set');
+      dealersSnapshot = { size: 0, docs: [] } as any;
+    }
 
     const totalUsers = usersSnapshot.size;
     const totalDealers = dealersSnapshot.size;

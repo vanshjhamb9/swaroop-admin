@@ -14,8 +14,7 @@ import {
   Typography,
   Alert,
 } from "@mui/material";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/firebase";
+import { getAuth } from "firebase/auth";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import useOwnersStore from "@/store/dealersPanel/OwnersInfo";
@@ -30,14 +29,39 @@ function AllDealersTable() {
     try {
       setLoading(true);
       setError(null);
-      const dealers = await getDocs(collection(db, "dealers"));
-      const v: any = [];
-      dealers.forEach((ve) => v.push({ ...ve.data(), id: ve.id }));
-      setdealers(v);
+      
+      const auth = getAuth();
+      const user = auth.currentUser;
+      
+      if (!user) {
+        setError('Not authenticated');
+        return;
+      }
+
+      const token = await user.getIdToken();
+      
+      const response = await fetch('/api/dealers', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch dealers');
+      }
+
+      const result = await response.json();
+      
+      if (result.success && Array.isArray(result.data)) {
+        setdealers(result.data);
+      } else {
+        setdealers([]);
+      }
     } catch (e: any) {
       console.error("Error fetching dealers:", e);
       setError("Failed to fetch dealers");
       toast.error("Couldn't fetch dealers");
+      setdealers([]);
     } finally {
       setLoading(false);
     }
