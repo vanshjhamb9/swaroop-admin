@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     });
     
   } catch (error: any) {
-    console.error('Error fetching dashboard data:', error);
+    console.error('Error fetching dashboard data:', error instanceof Error ? error.message : String(error));
     
     if (error.message === 'Admin access required') {
       return NextResponse.json(
