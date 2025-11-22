@@ -86,7 +86,7 @@ export async function POST(req: Request) {
 
     // Set custom claims
     console.log("🔐 Setting custom claims...");
-    await adminAuth.setCustomUserClaims(user.uid, { dealer: true });
+    await adminAuth.setCustomUserClaims(user.uid, { dealeradmin: true });
     console.log("✅ Custom claims set");
 
     return NextResponse.json(

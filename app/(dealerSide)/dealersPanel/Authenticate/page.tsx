@@ -56,8 +56,11 @@ const Authenticate = () => {
     const id = toast.loading("Signing In");
     try {
       if (email && password) {
-        // Simulate account creation
+        // Sign in with Firebase
         const user = await signInWithEmailAndPassword(auth, email, password);
+        
+        // Redirect to dealer dashboard after successful login
+        router.push("/dealersPanel");
 
         toast.update(id, {
           render: "Signed In Successfully",
@@ -77,8 +80,6 @@ const Authenticate = () => {
         type: "error",
       });
     }
-
-    // setOpenSnackbar(true);
   };
 
   return (
