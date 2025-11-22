@@ -1,11 +1,8 @@
 // pages/api/createAdmin.js
 
-import { adminAuth } from "../firebaseadmin.js";
+import { adminAuth, adminFirestore } from "../firebaseadmin.js";
 import { NextResponse } from "next/server";
-import admin from "firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
-
-const db = admin.firestore();
 
 export async function POST(req: Request) {
   try {
@@ -68,8 +65,7 @@ export async function POST(req: Request) {
     }
 
     // Create Firestore document
-    const docRef = db.collection("admins").doc(user.uid);
-    await docRef.set({
+    await adminFirestore.collection("admins").doc(user.uid).set({
       name,
       email: email.trim(),
       createdAt: Timestamp.now(),

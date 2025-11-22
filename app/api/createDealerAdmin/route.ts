@@ -1,7 +1,7 @@
 // app/api/createDealerAdmin/route.ts
 import { NextResponse } from "next/server";
 import { Timestamp } from "firebase-admin/firestore";
-import { adminAuth, adminFirestore } from "../firebaseadmin";
+import { adminAuth, adminFirestore } from "../firebaseadmin.js";
 
 export async function POST(req: Request) {
   try {
@@ -46,23 +46,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Test Firestore connection first
-    console.log("🧪 Testing Firestore connection...");
-    try {
-      const testRef = adminFirestore.collection('_test').doc('connection');
-      await testRef.set({ test: true, timestamp: Timestamp.now() });
-      await testRef.delete();
-      console.log("✅ Firestore connection successful");
-    } catch (firestoreError: any) {
-      console.error("❌ Firestore connection test failed:", firestoreError);
-      return NextResponse.json(
-        { 
-          message: "Firestore database connection failed. Please ensure Firestore is properly set up in Firebase Console.",
-          error: firestoreError.message 
-        },
-        { status: 500 }
-      );
-    }
+    // Proceed with dealer creation
+    console.log("📋 Proceeding with dealer creation...");
 
     // Create user
     console.log("👤 Creating user...");
