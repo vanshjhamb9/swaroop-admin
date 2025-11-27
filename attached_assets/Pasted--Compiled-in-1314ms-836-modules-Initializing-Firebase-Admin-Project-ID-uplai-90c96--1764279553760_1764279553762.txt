@@ -1,0 +1,149 @@
+ ✓ Compiled in 1314ms (836 modules)
+🔧 Initializing Firebase Admin...
+📝 Project ID: uplai-90c96
+📧 Client Email: firebase-adminsdk-fbsvc@uplai-90c96.iam.gserviceaccount.com
+🔑 Private Key Length: 1704
+🔑 Private Key Starts: -----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w
+🔑 Private Key Ends: -----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDSayw23KlV3TbY
+evwDotSkXpncC5RX/reDDjO+pG3VUzxilVnQBX9i1fq+2JxPSxAeOEBF/XQP/z6U
+dalovofdGaVQvJ2LU5LK7elzwvJSyqejR5HrZ2X/aJSkIReyrENu1WCJurFBhVwv
+6SMN9fPYkPahoRPSzhKYhWg8X7FS0rivJ+NBl60evbMj2t3yoxyFpZ/1hsqZFpMR
+IG7GpnuYtONQi9usxfv5FluKPr0uvQGalZBUSs8vy1GMtmWdg7EPjiL7/ZiwmmnP
+032A+Rrscei7RKWGKCVitrcZe0qR03aj8WbvhR60h+rrhBCRr14y/3h7eprMRk4g
+s9jXnKhHAgMBAAECggEAVFXGK9r3N8XpBI0OUvrBVXvhGPO/KiGaNbnMfX1z1At/
+aVfI3npFmzx+Ol2hEJraQ/JxuFukWAEKeQBLvQKYe8KaoqhmUIBXlmQSrGYXL52v
+4N5/mqUfmWW2Ja5pzCAFCvgUsD8WaldkIoPDnAXXDRbU8uUXh+c2RtE5fPExpiq6
+qZyRrWfmnC+rtggdVxm+ZjsJS7Ybjro82zIrC7WXDCqCj6b6qPa9Z0zzYauiDZBE
+tvKra7XQkJ82lIBPZtOnLSxzJT3WgIXhyT8QJ96RyWxbOx3y+sSg8DpQbj03ilN7
+a18t+Y4bezUaX4Zznq8RbpPMmr4BoyCUlakhiLuroQKBgQD1grz8fCy9SAr1gN7C
+nGmciGpeIcKlAAuCWfuLKM9ySu9BUUlmosKNUBCjz6sOaG609QrAMhrIpNd8asj/
+1hSdRMFmIIhmcsve0wOJSaTEFvBolBiVZF682Eu4r48b7c68Um5tfCc8tyN21Rjt
+akbNLHiE/tdnNKsUSnS/a4HJUQKBgQDbaJ3mWjIRgq8xtxo1ccajPbAPA3+eoElb
+QkTdFn/3ovT7W3O/8C6zhA1SnfZYST289U9gvfTsNuKR/qDN3aAKofApXP4zAgLM
+X2evxSgsYVTReDf7RLXyxUWhdcl4Bfdb0mrDBX0eWpkdlcgnAxaA47PDA67OLtz8
+R0PBixXyFwKBgAbiqcYy/VY5pQUJnjW7CUM4mDMXo0vZWnlHaMSYWmkMLPWaAAL+
+4ZHxAuZ1Nojq6N/uV2TYguPJq7lzjTuPl3hpqzrgArNM2Obg6CJ7jEFrm0ZzkNTv
+wbBuKIF/evX/j2K8tRgg+UC8qiP1CgPujRnH+4FPXF8qnPmutOOBclxhAoGAJFxx
+FpTKCWbb++Q5XrQNVE5L2CEfTD2KCqqv2Of6qyKBcQqV4zA9vRhcUN3GzpjMt3z7
++69fYKoz4DgPlC5vcHOn5mL36aIirpX9C/8jij9THCfNN0IK2UHiKUDo85Ahj0EO
+2mUVeCtRhrqk4fo8B34081Ov65GOo+x3iSKwr18CgYEAqrzwnXw7oVqCnYFzw9X9
+eGzt6ylcRo3CtfyZhAR/EKOri+3Hy7ZIH+lOV5DAWgH0g6sMV+g0DG2eOB3LSSNl
+gFXoFe8v8lL3in+SfKbC93ocTKgSGVOkXYlvfeFq99pWoUO74gZlqnUgV7R++2gm
+GzaG19be+fFuK8tRsPP+I6c=
+-----END PRIVATE KEY-----
+
+✅ Firebase Admin initialized successfully
+🔥 Firestore connected to project: uplai-90c96
+Error in dealers API: Firebase ID token has incorrect "aud" (audience) claim. Expected "uplai-90c96" but got "swaroop-a03d9". Make sure the ID token comes from the same Firebase project as the service account used to authenticate this SDK. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.
+ GET /api/dealers 500 in 15671ms
+Error in dealers API: Firebase ID token has incorrect "aud" (audience) claim. Expected "uplai-90c96" but got "swaroop-a03d9". Make sure the ID token comes from the same Firebase project as the service account used to authenticate this SDK. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.
+ GET /api/dealers 500 in 22ms
+ ○ Compiling /analytics ...
+ ✓ Compiled /analytics in 1323ms (2714 modules)
+ GET /analytics 200 in 1752ms
+ GET /analytics 200 in 81ms
+ ○ Compiling /api/analytics/stats ...
+ ✓ Compiled /api/analytics/stats in 1499ms (2716 modules)
+🔧 Initializing Firebase Admin...
+📝 Project ID: uplai-90c96
+📧 Client Email: firebase-adminsdk-fbsvc@uplai-90c96.iam.gserviceaccount.com
+🔑 Private Key Length: 1704
+🔑 Private Key Starts: -----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w
+🔑 Private Key Ends: -----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDSayw23KlV3TbY
+evwDotSkXpncC5RX/reDDjO+pG3VUzxilVnQBX9i1fq+2JxPSxAeOEBF/XQP/z6U
+dalovofdGaVQvJ2LU5LK7elzwvJSyqejR5HrZ2X/aJSkIReyrENu1WCJurFBhVwv
+6SMN9fPYkPahoRPSzhKYhWg8X7FS0rivJ+NBl60evbMj2t3yoxyFpZ/1hsqZFpMR
+IG7GpnuYtONQi9usxfv5FluKPr0uvQGalZBUSs8vy1GMtmWdg7EPjiL7/ZiwmmnP
+032A+Rrscei7RKWGKCVitrcZe0qR03aj8WbvhR60h+rrhBCRr14y/3h7eprMRk4g
+s9jXnKhHAgMBAAECggEAVFXGK9r3N8XpBI0OUvrBVXvhGPO/KiGaNbnMfX1z1At/
+aVfI3npFmzx+Ol2hEJraQ/JxuFukWAEKeQBLvQKYe8KaoqhmUIBXlmQSrGYXL52v
+4N5/mqUfmWW2Ja5pzCAFCvgUsD8WaldkIoPDnAXXDRbU8uUXh+c2RtE5fPExpiq6
+qZyRrWfmnC+rtggdVxm+ZjsJS7Ybjro82zIrC7WXDCqCj6b6qPa9Z0zzYauiDZBE
+tvKra7XQkJ82lIBPZtOnLSxzJT3WgIXhyT8QJ96RyWxbOx3y+sSg8DpQbj03ilN7
+a18t+Y4bezUaX4Zznq8RbpPMmr4BoyCUlakhiLuroQKBgQD1grz8fCy9SAr1gN7C
+nGmciGpeIcKlAAuCWfuLKM9ySu9BUUlmosKNUBCjz6sOaG609QrAMhrIpNd8asj/
+1hSdRMFmIIhmcsve0wOJSaTEFvBolBiVZF682Eu4r48b7c68Um5tfCc8tyN21Rjt
+akbNLHiE/tdnNKsUSnS/a4HJUQKBgQDbaJ3mWjIRgq8xtxo1ccajPbAPA3+eoElb
+QkTdFn/3ovT7W3O/8C6zhA1SnfZYST289U9gvfTsNuKR/qDN3aAKofApXP4zAgLM
+X2evxSgsYVTReDf7RLXyxUWhdcl4Bfdb0mrDBX0eWpkdlcgnAxaA47PDA67OLtz8
+R0PBixXyFwKBgAbiqcYy/VY5pQUJnjW7CUM4mDMXo0vZWnlHaMSYWmkMLPWaAAL+
+4ZHxAuZ1Nojq6N/uV2TYguPJq7lzjTuPl3hpqzrgArNM2Obg6CJ7jEFrm0ZzkNTv
+wbBuKIF/evX/j2K8tRgg+UC8qiP1CgPujRnH+4FPXF8qnPmutOOBclxhAoGAJFxx
+FpTKCWbb++Q5XrQNVE5L2CEfTD2KCqqv2Of6qyKBcQqV4zA9vRhcUN3GzpjMt3z7
++69fYKoz4DgPlC5vcHOn5mL36aIirpX9C/8jij9THCfNN0IK2UHiKUDo85Ahj0EO
+2mUVeCtRhrqk4fo8B34081Ov65GOo+x3iSKwr18CgYEAqrzwnXw7oVqCnYFzw9X9
+eGzt6ylcRo3CtfyZhAR/EKOri+3Hy7ZIH+lOV5DAWgH0g6sMV+g0DG2eOB3LSSNl
+gFXoFe8v8lL3in+SfKbC93ocTKgSGVOkXYlvfeFq99pWoUO74gZlqnUgV7R++2gm
+GzaG19be+fFuK8tRsPP+I6c=
+-----END PRIVATE KEY-----
+
+✅ Firebase Admin initialized successfully
+🔥 Firestore connected to project: uplai-90c96
+Error fetching analytics: Error: Firebase ID token has incorrect "aud" (audience) claim. Expected "uplai-90c96" but got "swaroop-a03d9". Make sure the ID token comes from the same Firebase project as the service account used to authenticate this SDK. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.
+    at async GET (app\api\analytics\stats\route.ts:16:25)
+    at async AppRouteRouteModule.do (webpack://next/dist/src/server/route-modules/app-route/module.ts:529:14)
+    at async AppRouteRouteModule.handle (webpack://next/dist/src/server/route-modules/app-route/module.ts:658:30)
+    at async doRender (node_modules\next\src\server\base-server.ts:2504:29)
+    at async responseGenerator (node_modules\next\src\server\base-server.ts:3027:21)
+    at async DevServer.renderToResponseWithComponentsImpl (node_modules\next\src\server\base-server.ts:3039:23)
+    at async DevServer.renderPageComponent (node_modules\next\src\server\base-server.ts:3597:15)
+    at async DevServer.renderToResponseImpl (node_modules\next\src\server\base-server.ts:3659:23)
+    at async DevServer.pipeImpl (node_modules\next\src\server\base-server.ts:1698:20)
+    at async NextNodeServer.handleCatchallRenderRequest (node_modules\next\src\server\next-server.ts:1034:6)
+    at async DevServer.handleRequestImpl (node_modules\next\src\server\base-server.ts:1462:8)
+    at async (node_modules\next\src\server\dev\next-dev-server.ts:514:13)
+    at async Span.traceAsyncFn (node_modules\next\src\trace\trace.ts:143:13)
+    at async DevServer.handleRequest (node_modules\next\src\server\dev\next-dev-server.ts:512:19)
+    at async invokeRender (node_modules\next\src\server\lib\router-server.ts:284:10)
+    at async handleRequest (node_modules\next\src\server\lib\router-server.ts:530:15)
+    at async requestHandlerImpl (node_modules\next\src\server\lib\router-server.ts:576:6)
+    at async Server.requestListener (node_modules\next\src\server\lib\start-server.ts:146:6)
+  14 |
+  15 |     const token = authHeader.split('Bearer ')[1];
+> 16 |     const decodedToken = await adminAuth.verifyIdToken(token);
+     |                         ^
+  17 |
+  18 |     if (!decodedToken.admin) {
+  19 |       return NextResponse.json( {
+  errorInfo: [Object],
+  codePrefix: 'auth'
+}
+ GET /api/analytics/stats 500 in 2599ms
+Error fetching analytics: Error: Firebase ID token has incorrect "aud" (audience) claim. Expected "uplai-90c96" but got "swaroop-a03d9". Make sure the ID token comes from the same Firebase project as the service account used to authenticate this SDK. See https://firebase.google.com/docs/auth/admin/verify-id-tokens for details on how to retrieve an ID token.
+    at async GET (app\api\analytics\stats\route.ts:16:25)
+    at async AppRouteRouteModule.do (webpack://next/dist/src/server/route-modules/app-route/module.ts:529:14)
+    at async AppRouteRouteModule.handle (webpack://next/dist/src/server/route-modules/app-route/module.ts:658:30)
+    at async doRender (node_modules\next\src\server\base-server.ts:2504:29)
+    at async responseGenerator (node_modules\next\src\server\base-server.ts:3027:21)
+    at async DevServer.renderToResponseWithComponentsImpl (node_modules\next\src\server\base-server.ts:3039:23)
+    at async DevServer.renderPageComponent (node_modules\next\src\server\base-server.ts:3597:15)
+    at async DevServer.renderToResponseImpl (node_modules\next\src\server\base-server.ts:3659:23)
+    at async DevServer.pipeImpl (node_modules\next\src\server\base-server.ts:1698:20)
+    at async NextNodeServer.handleCatchallRenderRequest (node_modules\next\src\server\next-server.ts:1034:6)
+    at async DevServer.handleRequestImpl (node_modules\next\src\server\base-server.ts:1462:8)
+    at async (node_modules\next\src\server\dev\next-dev-server.ts:514:13)
+    at async Span.traceAsyncFn (node_modules\next\src\trace\trace.ts:143:13)
+    at async DevServer.handleRequest (node_modules\next\src\server\dev\next-dev-server.ts:512:19)
+    at async invokeRender (node_modules\next\src\server\lib\router-server.ts:284:10)
+    at async handleRequest (node_modules\next\src\server\lib\router-server.ts:530:15)
+    at async requestHandlerImpl (node_modules\next\src\server\lib\router-server.ts:576:6)
+    at async Server.requestListener (node_modules\next\src\server\lib\start-server.ts:146:6)
+  14 |
+  15 |     const token = authHeader.split('Bearer ')[1];
+> 16 |     const decodedToken = await adminAuth.verifyIdToken(token);
+     |                         ^
+  17 |
+  18 |     if (!decodedToken.admin) {
+  19 |       return NextResponse.json( {
+  errorInfo: [Object],
+  codePrefix: 'auth'
+}
+ GET /api/analytics/stats 500 in 143ms
+ ○ Compiling /admin_panel/Authenticate ...
+ ✓ Compiled /admin_panel/Authenticate in 7.1s (2833 modules)
+Mobikle Open  false
+ GET /admin_panel/Authenticate 200 in 8841ms
