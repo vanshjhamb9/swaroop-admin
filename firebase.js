@@ -9,10 +9,10 @@ import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCRcKVtYYVz50TN9JhXBEVo9vECDkSJ6ik",
-  authDomain: "swaroop-a03d9.firebaseapp.com",
-  projectId: "swaroop-a03d9",
-  storageBucket: "swaroop-a03d9.firebasestorage.app",
+  apiKey: "AIzaSyBemry5DfDwI1DuI4YZB7wC20WhFb7_pww",
+  authDomain: "uplai-90c96.firebaseapp.com",
+  projectId: "uplai-90c96",
+  storageBucket: "uplai-90c96.firebasestorage.app",
   messagingSenderId: "498150212901",
   appId: "1:498150212901:web:965dccb08962c3751606cc",
   measurementId: "G-JWRN3H2NLX"
