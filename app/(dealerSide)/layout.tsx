@@ -103,7 +103,7 @@ export default function DealerAdminPanel({
         setLoading(false);
       }
     });
-  }, [router]);
+  }, []);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
