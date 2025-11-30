@@ -77,66 +77,88 @@ function AdminPage() {
         color: "text.primary",
       }}
     >
-      <Typography
-        variant="h4"
-        fontWeight="bold"
-        gutterBottom
-        align="center"
-        sx={{ marginBottom: 4 }}
-      >
-        Welcome to Dealer Panel
-      </Typography>
-      <Grid container spacing={4}>
+      <Box sx={{ mb: 4 }}>
+        <Typography
+          variant="h4"
+          fontWeight="bold"
+          gutterBottom
+          sx={{ marginBottom: 1 }}
+        >
+          Welcome to Dealer Panel
+        </Typography>
+        <Typography variant="body1" color="textSecondary">
+          Here's an overview of your dealer account
+        </Typography>
+      </Box>
+
+      <Grid container spacing={3}>
         <Grid item xs={12} sm={6} md={4}>
           <Paper
+            elevation={2}
             sx={{
-              padding: 4,
+              padding: 3,
               textAlign: "center",
-              borderRadius: "16px",
-              boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+              borderRadius: "12px",
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "white",
+              transition: "all 0.3s ease",
               ":hover": {
-                transform: "scale(1.05)",
-                transition: "0.3s ease-in-out",
+                transform: "translateY(-4px)",
+                boxShadow: "0px 12px 24px rgba(0, 0, 0, 0.15)",
               },
-              color: "text.primary",
-              height: 160,
+              height: 180,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
             }}
           >
             <Typography
               variant="h6"
               fontWeight="bold"
-              color="primary"
               gutterBottom
+              sx={{ opacity: 0.9 }}
             >
               Dealer Name
             </Typography>
-            <Typography variant="h5">{name || "N/A"}</Typography>
+            <Typography variant="h5" fontWeight="bold">
+              {name || "N/A"}
+            </Typography>
           </Paper>
         </Grid>
 
         <Grid item xs={12} sm={6} md={4}>
           <Paper
+            elevation={2}
             sx={{
-              padding: 4,
+              padding: 3,
               textAlign: "center",
-              borderRadius: "16px",
-              boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+              borderRadius: "12px",
+              background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+              color: "white",
+              transition: "all 0.3s ease",
               ":hover": {
-                transform: "scale(1.05)",
-                transition: "0.3s ease-in-out",
+                transform: "translateY(-4px)",
+                boxShadow: "0px 12px 24px rgba(0, 0, 0, 0.15)",
               },
-              height: 160,
+              height: 180,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
             }}
           >
             <Typography
               variant="h6"
               fontWeight="bold"
-              color="primary"
               gutterBottom
+              sx={{ opacity: 0.9 }}
             >
-              Email
+              Email Address
             </Typography>
-            <Typography variant="body2" sx={{ wordBreak: "break-all" }}>
+            <Typography 
+              variant="body2" 
+              fontWeight="bold"
+              sx={{ wordBreak: "break-all", fontSize: "0.95rem" }}
+            >
               {email || "N/A"}
             </Typography>
           </Paper>
@@ -144,28 +166,135 @@ function AdminPage() {
 
         <Grid item xs={12} sm={6} md={4}>
           <Paper
+            elevation={2}
             sx={{
-              padding: 4,
+              padding: 3,
               textAlign: "center",
-              borderRadius: "16px",
-              boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+              borderRadius: "12px",
+              background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+              color: "white",
+              transition: "all 0.3s ease",
               ":hover": {
-                transform: "scale(1.05)",
-                transition: "0.3s ease-in-out",
+                transform: "translateY(-4px)",
+                boxShadow: "0px 12px 24px rgba(0, 0, 0, 0.15)",
               },
-              height: 160,
+              height: 180,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
             }}
           >
             <Typography
               variant="h6"
               fontWeight="bold"
-              color="primary"
               gutterBottom
+              sx={{ opacity: 0.9 }}
             >
               Total Vehicles
             </Typography>
-            <Typography variant="h3" fontWeight="bold" sx={{ color: "#1976d2" }}>
+            <Typography variant="h3" fontWeight="bold">
               {totalVehicles}
+            </Typography>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* Quick Actions */}
+      <Grid container spacing={3} sx={{ mt: 2 }}>
+        <Grid item xs={12}>
+          <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+            Quick Actions
+          </Typography>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper
+            elevation={1}
+            sx={{
+              p: 2,
+              textAlign: "center",
+              cursor: "pointer",
+              transition: "all 0.3s ease",
+              ":hover": {
+                boxShadow: "0px 8px 16px rgba(0, 0, 0, 0.1)",
+                bgcolor: "action.hover",
+              },
+              borderRadius: "8px",
+            }}
+          >
+            <Typography variant="h5" sx={{ mb: 1 }}>
+              📋
+            </Typography>
+            <Typography variant="body2" fontWeight="bold">
+              Manage Vehicles
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper
+            elevation={1}
+            sx={{
+              p: 2,
+              textAlign: "center",
+              cursor: "pointer",
+              transition: "all 0.3s ease",
+              ":hover": {
+                boxShadow: "0px 8px 16px rgba(0, 0, 0, 0.1)",
+                bgcolor: "action.hover",
+              },
+              borderRadius: "8px",
+            }}
+          >
+            <Typography variant="h5" sx={{ mb: 1 }}>
+              📄
+            </Typography>
+            <Typography variant="body2" fontWeight="bold">
+              View Invoices
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper
+            elevation={1}
+            sx={{
+              p: 2,
+              textAlign: "center",
+              cursor: "pointer",
+              transition: "all 0.3s ease",
+              ":hover": {
+                boxShadow: "0px 8px 16px rgba(0, 0, 0, 0.1)",
+                bgcolor: "action.hover",
+              },
+              borderRadius: "8px",
+            }}
+          >
+            <Typography variant="h5" sx={{ mb: 1 }}>
+              ⚙️
+            </Typography>
+            <Typography variant="body2" fontWeight="bold">
+              Settings
+            </Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper
+            elevation={1}
+            sx={{
+              p: 2,
+              textAlign: "center",
+              cursor: "pointer",
+              transition: "all 0.3s ease",
+              ":hover": {
+                boxShadow: "0px 8px 16px rgba(0, 0, 0, 0.1)",
+                bgcolor: "action.hover",
+              },
+              borderRadius: "8px",
+            }}
+          >
+            <Typography variant="h5" sx={{ mb: 1 }}>
+              ❓
+            </Typography>
+            <Typography variant="body2" fontWeight="bold">
+              Help & Support
             </Typography>
           </Paper>
         </Grid>

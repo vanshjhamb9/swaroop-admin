@@ -122,40 +122,51 @@ export default function DealerAdminPanel({
           href="/dealersPanel"
           sx={{
             "&:hover": {
-              backgroundColor: theme.palette.background.default,
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
             },
           }}
         >
-          <ListItemText primary="Dashboard" />
+          <ListItemText primary="📊 Dashboard" primaryTypographyProps={{ fontWeight: 500 }} />
         </ListItem>
         <ListItem
           component={Link}
           href="/dealersPanel/Manage_Vehicles"
           sx={{
             "&:hover": {
-              backgroundColor: theme.palette.background.default,
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
             },
           }}
         >
-          <ListItemText primary="Manage Vehicles" />
+          <ListItemText primary="🚗 Manage Vehicles" primaryTypographyProps={{ fontWeight: 500 }} />
+        </ListItem>
+        <ListItem
+          component={Link}
+          href="/dealersPanel/Invoices"
+          sx={{
+            "&:hover": {
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+            },
+          }}
+        >
+          <ListItemText primary="📄 Invoices" primaryTypographyProps={{ fontWeight: 500 }} />
         </ListItem>
         <ListItem
           component={Link}
           href="/dealersPanel/Settings"
           sx={{
             "&:hover": {
-              backgroundColor: theme.palette.background.default,
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
             },
           }}
         >
-          <ListItemText primary="Settings" />
+          <ListItemText primary="⚙️ Settings" primaryTypographyProps={{ fontWeight: 500 }} />
         </ListItem>
         <ListItem
           component={Link}
           href="#"
           sx={{
             "&:hover": {
-              backgroundColor: theme.palette.background.default,
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
             },
           }}
           onClick={async () => {
@@ -163,7 +174,7 @@ export default function DealerAdminPanel({
             router.replace("/");
           }}
         >
-          <ListItemText primary="Logout" />
+          <ListItemText primary="🚪 Logout" primaryTypographyProps={{ fontWeight: 500, color: 'error' }} />
         </ListItem>
       </List>
     </>
