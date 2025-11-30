@@ -171,11 +171,22 @@ export default function DealerAdminPanel({
     </>
   );
 
-  return loading ? (
-    <div className="flex items-center justify-center h-screen">
-      <LoaderIcon color="blue" className="!h-40 !w-40 !border-blue-500" />
-    </div>
-  ) : isAdmin ? (
+  // Show loading until auth is complete
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <LoaderIcon color="blue" className="!h-40 !w-40 !border-blue-500" />
+      </div>
+    );
+  }
+
+  // If not authenticated, show children (login page)
+  if (!isAdmin) {
+    return <Box sx={{ minHeight: "100vh" }}>{children}</Box>;
+  }
+
+  // Authenticated admin - show dashboard with layout
+  return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
       {/* AppBar for mobile screens */}
       <AppBar position="fixed" sx={{ display: { md: "none" } }}>
@@ -244,7 +255,5 @@ export default function DealerAdminPanel({
         {children}
       </Box>
     </Box>
-  ) : (
-    <Box sx={{ minHeight: "100vh" }}>{children}</Box>
   );
 }
