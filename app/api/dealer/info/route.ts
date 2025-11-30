@@ -22,7 +22,9 @@ export async function GET(request: NextRequest) {
       .doc(dealerId)
       .get();
 
-    if (!dealerDoc.exists()) {
+    const data = dealerDoc.data();
+    
+    if (!data) {
       // Return basic info if doc doesn't exist
       return NextResponse.json({
         uid: dealerId,
@@ -32,8 +34,6 @@ export async function GET(request: NextRequest) {
         vehicles: [],
       });
     }
-
-    const data = dealerDoc.data();
     return NextResponse.json({
       uid: dealerId,
       email: decodedToken.email || '',

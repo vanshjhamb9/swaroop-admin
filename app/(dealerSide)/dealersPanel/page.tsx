@@ -192,7 +192,7 @@ function AdminPage() {
               fontWeight="bold"
               sx={{ wordBreak: "break-all", fontSize: "0.95rem" }}
             >
-              {email || "N/A"}
+              {localEmail || "N/A"}
             </Typography>
           </Paper>
         </Grid>
