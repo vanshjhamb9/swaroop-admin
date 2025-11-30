@@ -15,7 +15,6 @@ import {
   useTheme,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import Header from "@/components/Header/DealersPanelHeader";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "@/firebase";
@@ -38,63 +37,54 @@ export default function DealerAdminPanel({
   const { setinfo } = useOwnersStore();
 
   useEffect(() => {
-    return onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
         setLoading(true);
-        if (user) {
-          let retries = 0;
-          const maxRetries = 5;
-          let hasDealeradminClaim = false;
-          let tokenResult = null;
-
-          // Retry logic to wait for custom claims to be available
-          while (retries < maxRetries && !hasDealeradminClaim) {
-            tokenResult = await user.getIdTokenResult(true); // Force refresh token
-            if (tokenResult.claims.dealeradmin) {
-              hasDealeradminClaim = true;
-              break;
-            }
-            retries++;
-            if (retries < maxRetries) {
-              await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retry
-            }
-          }
-
-          if (!hasDealeradminClaim) {
-            throw new Error("Dealer admin claim not found. Please try logging in again.");
-          }
-
-          // Set basic dealer info from authenticated user
-          // Individual pages will fetch additional data as needed
-          setinfo({
-            email: user.email || "",
-            name: "", // Will be loaded on dashboard
-            uid: user.uid,
-            contactDetails: "", // Will be loaded on dashboard
-            vehicles: [],
-          });
-          
-          setIsAdmin(true);
-          // Navigate to dashboard after successful auth
-          router.replace("/dealersPanel");
-        } else {
+        
+        if (!user) {
           setIsAdmin(false);
           router.replace("/dealersPanel/Authenticate");
+          return;
         }
-      } catch (e: any) {
-        console.error("Auth error:", e);
+
+        // Verify dealeradmin claim with retries
+        let hasDealeradminClaim = false;
+        for (let i = 0; i < 5; i++) {
+          const tokenResult = await user.getIdTokenResult(true);
+          if (tokenResult.claims.dealeradmin) {
+            hasDealeradminClaim = true;
+            break;
+          }
+          if (i < 4) await new Promise(r => setTimeout(r, 500));
+        }
+
+        if (!hasDealeradminClaim) {
+          throw new Error("Not authorized as dealer admin");
+        }
+
+        // Set user info
+        setinfo({
+          email: user.email || "",
+          name: "",
+          uid: user.uid,
+          contactDetails: "",
+          vehicles: [],
+        });
+        
+        setIsAdmin(true);
+        router.replace("/dealersPanel");
+      } catch (error: any) {
+        console.error("Auth error:", error?.message);
         setIsAdmin(false);
-        const errorMsg = e?.message || "Unauthorized access. Please try logging in again.";
-        toast.error(errorMsg);
-        // Use setTimeout to ensure UI is updated before navigation
-        setTimeout(() => {
-          router.replace("/dealersPanel/Authenticate");
-        }, 500);
+        toast.error(error?.message || "Authentication failed");
+        router.replace("/dealersPanel/Authenticate");
       } finally {
         setLoading(false);
       }
     });
-  }, []);
+
+    return () => unsubscribe();
+  }, [router, setinfo]);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -104,74 +94,34 @@ export default function DealerAdminPanel({
     <>
       <Toolbar>
         <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-          Car Admin Panel
+          Dealer Panel
         </Typography>
       </Toolbar>
       <List>
-        <ListItem
-          component={Link}
-          href="/dealersPanel"
-          sx={{
-            "&:hover": {
-              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-            },
-          }}
-        >
-          <ListItemText primary="📊 Dashboard" primaryTypographyProps={{ fontWeight: 500 }} />
+        <ListItem component={Link} href="/dealersPanel">
+          <ListItemText primary="📊 Dashboard" />
+        </ListItem>
+        <ListItem component={Link} href="/dealersPanel/Manage_Vehicles">
+          <ListItemText primary="🚗 Manage Vehicles" />
+        </ListItem>
+        <ListItem component={Link} href="/dealersPanel/Invoices">
+          <ListItemText primary="📄 Invoices" />
+        </ListItem>
+        <ListItem component={Link} href="/dealersPanel/Settings">
+          <ListItemText primary="⚙️ Settings" />
         </ListItem>
         <ListItem
-          component={Link}
-          href="/dealersPanel/Manage_Vehicles"
-          sx={{
-            "&:hover": {
-              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-            },
-          }}
-        >
-          <ListItemText primary="🚗 Manage Vehicles" primaryTypographyProps={{ fontWeight: 500 }} />
-        </ListItem>
-        <ListItem
-          component={Link}
-          href="/dealersPanel/Invoices"
-          sx={{
-            "&:hover": {
-              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-            },
-          }}
-        >
-          <ListItemText primary="📄 Invoices" primaryTypographyProps={{ fontWeight: 500 }} />
-        </ListItem>
-        <ListItem
-          component={Link}
-          href="/dealersPanel/Settings"
-          sx={{
-            "&:hover": {
-              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-            },
-          }}
-        >
-          <ListItemText primary="⚙️ Settings" primaryTypographyProps={{ fontWeight: 500 }} />
-        </ListItem>
-        <ListItem
-          component={Link}
-          href="#"
-          sx={{
-            "&:hover": {
-              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-            },
-          }}
           onClick={async () => {
             await signOut(auth);
             router.replace("/");
           }}
         >
-          <ListItemText primary="🚪 Logout" primaryTypographyProps={{ fontWeight: 500, color: 'error' }} />
+          <ListItemText primary="🚪 Logout" />
         </ListItem>
       </List>
     </>
   );
 
-  // Show loading until auth is complete
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -180,69 +130,48 @@ export default function DealerAdminPanel({
     );
   }
 
-  // If not authenticated, show children (login page)
   if (!isAdmin) {
     return <Box sx={{ minHeight: "100vh" }}>{children}</Box>;
   }
 
-  // Authenticated admin - show dashboard with layout
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      {/* AppBar for mobile screens */}
       <AppBar position="fixed" sx={{ display: { md: "none" } }}>
         <Toolbar>
-          <IconButton
-            color="inherit"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2 }}
-          >
+          <IconButton color="inherit" edge="start" onClick={handleDrawerToggle}>
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap>
-            Car Admin Panel
-          </Typography>
+          <Typography variant="h6">Dealer Panel</Typography>
         </Toolbar>
       </AppBar>
 
-      {/* Permanent Drawer for larger screens */}
       <Drawer
         variant="permanent"
         sx={{
           display: { xs: "none", md: "block" },
           width: drawerWidth,
-          flexShrink: 0,
           "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
             backgroundColor: theme.palette.background.paper,
-            color: theme.palette.primary.main,
           },
         }}
       >
         {drawerContent}
       </Drawer>
 
-      {/* Temporary Drawer for mobile screens */}
       <Drawer
         variant="temporary"
         open={mobileOpen}
         onClose={handleDrawerToggle}
-        ModalProps={{ keepMounted: true }}
         sx={{
           display: { xs: "block", md: "none" },
-          "& .MuiDrawer-paper": {
-            width: drawerWidth,
-            boxSizing: "border-box",
-            backgroundColor: theme.palette.background.paper,
-            color: theme.palette.primary.main,
-          },
+          "& .MuiDrawer-paper": { width: drawerWidth },
         }}
       >
         {drawerContent}
       </Drawer>
 
-      {/* Main content */}
       <Box
         component="main"
         sx={{
@@ -251,7 +180,6 @@ export default function DealerAdminPanel({
           mt: { xs: 8, md: 0 },
         }}
       >
-        <Header />
         {children}
       </Box>
     </Box>
