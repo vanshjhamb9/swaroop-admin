@@ -1,9 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Paper, Grid, CircularProgress, Alert, Button } from "@mui/material";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/firebase";
 import useOwnersStore from "@/store/dealersPanel/OwnersInfo";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/firebase";
 import { toast } from "react-toastify";
 
 function AdminPage() {
@@ -12,18 +12,31 @@ function AdminPage() {
   const [totalVehicles, setTotalVehicles] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [token, setToken] = useState<string>("");
 
-  const fetchVehicleCount = async (dealerId: string) => {
-    if (!dealerId) {
-      setLoading(false);
-      return;
-    }
-    
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const idToken = await user.getIdToken();
+        setToken(idToken);
+        await fetchVehicleCount(idToken);
+      } else {
+        setLoading(false);
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  const fetchVehicleCount = async (authToken: string) => {
     try {
       setLoading(true);
       setError(null);
-      const vehiclesSnap = await getDocs(collection(db, "dealers", dealerId, "vehicles"));
-      setTotalVehicles(vehiclesSnap.size);
+      const response = await fetch("/api/vehicles/list", {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!response.ok) throw new Error("Failed to fetch vehicles");
+      const data = await response.json();
+      setTotalVehicles(data.vehicles?.length || 0);
     } catch (err: any) {
       console.error("Error fetching vehicles:", err);
       const errorMsg = "Failed to load vehicle count";
@@ -33,14 +46,6 @@ function AdminPage() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (uid) {
-      fetchVehicleCount(uid);
-    } else {
-      setLoading(false);
-    }
-  }, [uid]);
 
   if (loading) {
     return (
@@ -57,7 +62,7 @@ function AdminPage() {
           severity="error" 
           sx={{ mb: 2 }}
           action={
-            <Button color="inherit" size="small" onClick={fetchVehicleCount}>
+            <Button color="inherit" size="small" onClick={() => fetchVehicleCount(token)}>
               Retry
             </Button>
           }
