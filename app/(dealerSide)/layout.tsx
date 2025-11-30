@@ -18,11 +18,10 @@ import MenuIcon from "@mui/icons-material/Menu";
 import Header from "@/components/Header/DealersPanelHeader";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth, db } from "@/firebase";
+import { auth } from "@/firebase";
 import { toast } from "react-toastify";
 import { LoaderIcon } from "react-hot-toast";
 import useOwnersStore from "@/store/dealersPanel/OwnersInfo";
-import { doc, getDoc } from "firebase/firestore";
 
 const drawerWidth = 240;
 
@@ -65,22 +64,25 @@ export default function DealerAdminPanel({
             throw new Error("Dealer admin claim not found. Please try logging in again.");
           }
 
-          // Now fetch dealer data
-          const dealerDocRef = doc(db, "dealers", user.uid);
-          const dealerSnapshot = await getDoc(dealerDocRef);
-          
-          if (!dealerSnapshot.exists()) {
-            throw new Error("Dealer profile not found in database.");
+          // Fetch dealer profile from API
+          const idToken = await user.getIdToken();
+          const response = await fetch('/api/dealer/profile', {
+            headers: { Authorization: `Bearer ${idToken}` }
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to fetch dealer profile");
           }
 
-          const dealerData = dealerSnapshot.data();
+          const dealerData = await response.json();
           
           setinfo({
-            email: user.email || "",
-            name: dealerData?.name || "",
-            uid: user.uid,
-            contactDetails: dealerData?.contactDetails || "",
-            vehicles: dealerData?.vehicles || [],
+            email: dealerData.email,
+            name: dealerData.name,
+            uid: dealerData.uid,
+            contactDetails: dealerData.contactDetails,
+            vehicles: dealerData.vehicles || [],
           });
           
           setIsAdmin(true);
