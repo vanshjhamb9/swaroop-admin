@@ -64,25 +64,14 @@ export default function DealerAdminPanel({
             throw new Error("Dealer admin claim not found. Please try logging in again.");
           }
 
-          // Fetch dealer profile from API
-          const idToken = await user.getIdToken();
-          const response = await fetch('/api/dealer/profile', {
-            headers: { Authorization: `Bearer ${idToken}` }
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Failed to fetch dealer profile");
-          }
-
-          const dealerData = await response.json();
-          
+          // Set basic dealer info from authenticated user
+          // Individual pages will fetch additional data as needed
           setinfo({
-            email: dealerData.email,
-            name: dealerData.name,
-            uid: dealerData.uid,
-            contactDetails: dealerData.contactDetails,
-            vehicles: dealerData.vehicles || [],
+            email: user.email || "",
+            name: "", // Will be loaded on dashboard
+            uid: user.uid,
+            contactDetails: "", // Will be loaded on dashboard
+            vehicles: [],
           });
           
           setIsAdmin(true);

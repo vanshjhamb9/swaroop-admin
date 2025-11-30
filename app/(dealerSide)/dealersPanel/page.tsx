@@ -7,8 +7,9 @@ import useOwnersStore from "@/store/dealersPanel/OwnersInfo";
 import { toast } from "react-toastify";
 
 function AdminPage() {
-  const { info } = useOwnersStore();
-  const { name, email, uid } = info;
+  const { info, setinfo } = useOwnersStore();
+  const [localName, setLocalName] = useState<string>("");
+  const [localEmail, setLocalEmail] = useState<string>("");
   const [totalVehicles, setTotalVehicles] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,13 +20,40 @@ function AdminPage() {
       if (user) {
         const idToken = await user.getIdToken();
         setToken(idToken);
-        await fetchVehicleCount(idToken);
+        await Promise.all([
+          fetchDealerInfo(idToken),
+          fetchVehicleCount(idToken)
+        ]);
       } else {
         setLoading(false);
       }
     });
     return unsubscribe;
   }, []);
+
+  const fetchDealerInfo = async (authToken: string) => {
+    try {
+      const response = await fetch("/api/dealer/info", {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!response.ok) throw new Error("Failed to fetch dealer info");
+      const data = await response.json();
+      setLocalName(data.name || "Dealer");
+      setLocalEmail(data.email || "");
+      setinfo({
+        email: data.email,
+        name: data.name,
+        uid: data.uid,
+        contactDetails: data.contactDetails,
+        vehicles: data.vehicles,
+      });
+    } catch (err: any) {
+      console.error("Error fetching dealer info:", err);
+      // Use fallback from store
+      setLocalName(info?.name || "Dealer");
+      setLocalEmail(info?.email || "");
+    }
+  };
 
   const fetchVehicleCount = async (authToken: string) => {
     try {
@@ -126,7 +154,7 @@ function AdminPage() {
               Dealer Name
             </Typography>
             <Typography variant="h5" fontWeight="bold">
-              {name || "N/A"}
+              {localName || "N/A"}
             </Typography>
           </Paper>
         </Grid>
