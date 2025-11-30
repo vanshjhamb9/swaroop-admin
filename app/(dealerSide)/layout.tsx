@@ -43,31 +43,67 @@ export default function DealerAdminPanel({
       try {
         setLoading(true);
         if (user) {
-          const tokenResult = await user.getIdTokenResult();
-          if (!tokenResult.claims.dealeradmin) throw "Unauthorized";
-          const res = await getDoc(doc(db, "dealers", user.uid));
+          let retries = 0;
+          const maxRetries = 5;
+          let hasDealeradminClaim = false;
+          let tokenResult = null;
+
+          // Retry logic to wait for custom claims to be available
+          while (retries < maxRetries && !hasDealeradminClaim) {
+            tokenResult = await user.getIdTokenResult(true); // Force refresh token
+            if (tokenResult.claims.dealeradmin) {
+              hasDealeradminClaim = true;
+              break;
+            }
+            retries++;
+            if (retries < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 500)); // Wait 500ms before retry
+            }
+          }
+
+          if (!hasDealeradminClaim) {
+            throw new Error("Dealer admin claim not found. Please try logging in again.");
+          }
+
+          // Now fetch dealer data
+          const dealerDocRef = doc(db, "dealers", user.uid);
+          const dealerSnapshot = await getDoc(dealerDocRef);
+          
+          if (!dealerSnapshot.exists()) {
+            throw new Error("Dealer profile not found in database.");
+          }
+
+          const dealerData = dealerSnapshot.data();
+          
           setinfo({
-            email: user.email!,
-            name: res.data()!.name,
+            email: user.email || "",
+            name: dealerData?.name || "",
             uid: user.uid,
-            contactDetails: res.data()!.contactDetails,
-            vehicles: res.data()!.vehicles || [],
+            contactDetails: dealerData?.contactDetails || "",
+            vehicles: dealerData?.vehicles || [],
           });
-          router.replace("/dealersPanel/Manage_Vehicles");
-          setIsAdmin(!!tokenResult.claims.dealeradmin);
+          
+          setIsAdmin(true);
+          // Navigate to dashboard after successful auth
+          router.replace("/dealersPanel");
         } else {
           setIsAdmin(false);
           router.replace("/dealersPanel/Authenticate");
         }
-      } catch (e) {
+      } catch (e: any) {
+        console.error("Auth error:", e);
         setIsAdmin(false);
-        toast.error("Unauthorized Email");
-        router.replace("/dealersPanel/Authenticate");
+        const errorMsg = e?.message || "Unauthorized access. Please try logging in again.";
+        toast.error(errorMsg);
+        // Use setTimeout to ensure UI is updated before navigation
+        setTimeout(() => {
+          router.replace("/dealersPanel/Authenticate");
+        }, 500);
       } finally {
         setLoading(false);
       }
     });
-  }, []);
+  }, [router]);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);

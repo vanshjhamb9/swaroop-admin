@@ -7,15 +7,14 @@ import { db } from "@/firebase";
 import { toast } from "react-toastify";
 
 function AdminPage() {
-  const {
-    info: { name, email, uid },
-  } = useOwnersStore();
+  const { info } = useOwnersStore();
+  const { name, email, uid } = info;
   const [totalVehicles, setTotalVehicles] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchVehicleCount = async () => {
-    if (!uid) {
+  const fetchVehicleCount = async (dealerId: string) => {
+    if (!dealerId) {
       setLoading(false);
       return;
     }
@@ -23,7 +22,7 @@ function AdminPage() {
     try {
       setLoading(true);
       setError(null);
-      const vehiclesSnap = await getDocs(collection(db, "dealers", uid, "vehicles"));
+      const vehiclesSnap = await getDocs(collection(db, "dealers", dealerId, "vehicles"));
       setTotalVehicles(vehiclesSnap.size);
     } catch (err: any) {
       console.error("Error fetching vehicles:", err);
@@ -36,7 +35,11 @@ function AdminPage() {
   };
 
   useEffect(() => {
-    fetchVehicleCount();
+    if (uid) {
+      fetchVehicleCount(uid);
+    } else {
+      setLoading(false);
+    }
   }, [uid]);
 
   if (loading) {
@@ -133,7 +136,9 @@ function AdminPage() {
             >
               Email
             </Typography>
-            <Typography variant="h6">{email || "N/A"}</Typography>
+            <Typography variant="body2" sx={{ wordBreak: "break-all" }}>
+              {email || "N/A"}
+            </Typography>
           </Paper>
         </Grid>
 
