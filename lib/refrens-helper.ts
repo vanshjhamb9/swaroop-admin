@@ -102,12 +102,13 @@ async function getAccessToken(): Promise<string> {
     throw new Error('Refrens API credentials not configured');
   }
 
-  const response = await fetch(`${REFRENS_API_URL}/authenticate`, {
+  const response = await fetch(`${REFRENS_API_URL}/authentication`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
+      strategy: 'app-secret',
       appId: REFRENS_APP_ID,
       appSecret: REFRENS_APP_SECRET
     })
@@ -119,7 +120,8 @@ async function getAccessToken(): Promise<string> {
     throw new Error(`Failed to get Refrens access token: ${JSON.stringify(data)}`);
   }
 
-  accessToken = data.accessToken || data.token;
+  // Extract token from nested authentication object
+  accessToken = data.authentication?.accessToken || data.accessToken || data.token;
   tokenExpiry = Date.now() + (55 * 60 * 1000);
 
   if (!accessToken) {
@@ -331,3 +333,5 @@ export function getInvoiceAnalytics(invoices: RefrensInvoice[]) {
     thisMonthRevenue
   };
 }
+
+

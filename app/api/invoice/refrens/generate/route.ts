@@ -1,69 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminFirestore } from '../../../firebaseadmin';
-import { createInvoice, RefrensInvoiceData } from '@/lib/refrens-helper';
+import { createInvoice } from '@/lib/refrens-helper';
+import { validateGSTIN } from '@/lib/gst-helper';
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.split(' ')[1];
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const decodedToken = await adminAuth.verifyIdToken(token);
-    if (!decodedToken.admin) {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
     const body = await request.json();
     const {
       customerName,
       customerEmail,
       customerPhone,
       customerAddress,
-      items,
       invoiceTitle,
-      currency = 'INR',
-      sendEmail = true,
-      userId,
-      paymentId
+      items,
+      sendEmail,
+      currency
     } = body;
 
-    if (!customerName || !items || items.length === 0) {
+    if (!customerName) {
       return NextResponse.json(
-        { error: 'Missing required fields: customerName, items' },
+        { success: false, error: 'Customer name is required' },
         { status: 400 }
       );
     }
 
-    const invoiceData: RefrensInvoiceData = {
+    if (!items || items.length === 0) {
+      return NextResponse.json(
+        { success: false, error: 'At least one item is required' },
+        { status: 400 }
+      );
+    }
+
+    const billedTo: any = {
+      name: customerName,
+      country: customerAddress?.country || 'IN'
+    };
+
+    if (customerEmail) billedTo.email = customerEmail;
+    if (customerPhone) billedTo.phone = customerPhone;
+    if (customerAddress?.street) billedTo.street = customerAddress.street;
+    if (customerAddress?.city) billedTo.city = customerAddress.city;
+    if (customerAddress?.pincode) billedTo.pincode = customerAddress.pincode;
+
+    // Only add GST fields if GSTIN is provided
+    if (customerAddress?.gstin && customerAddress.gstin.trim()) {
+      const gstin = customerAddress.gstin.trim().toUpperCase();
+      
+      if (!validateGSTIN(gstin)) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid GSTIN format. Example: 07AAAAA0000A1Z5' },
+          { status: 400 }
+        );
+      }
+
+      if (!customerAddress.gstState) {
+        return NextResponse.json(
+          { success: false, error: 'GST State Code is required when GSTIN is provided' },
+          { status: 400 }
+        );
+      }
+
+      billedTo.gstin = gstin;
+      billedTo.gstState = customerAddress.gstState;
+    }
+
+    const invoiceData = {
       invoiceTitle: invoiceTitle || 'Tax Invoice',
-      invoiceType: 'INVOICE',
-      currency,
-      billedTo: {
-        name: customerName,
-        email: customerEmail,
-        phone: customerPhone,
-        street: customerAddress?.street,
-        city: customerAddress?.city,
-        pincode: customerAddress?.pincode,
-        gstState: customerAddress?.gstState,
-        gstin: customerAddress?.gstin,
-        country: customerAddress?.country || 'IN'
-      },
+      invoiceType: 'INVOICE' as const,
+      currency: currency || 'INR',
+      billedTo,
       items: items.map((item: any) => ({
         name: item.name,
-        rate: item.rate,
-        quantity: item.quantity || 1,
-        gstRate: item.gstRate || 0
-      })),
-      contact: {
-        email: customerEmail,
-        phone: customerPhone
-      }
+        rate: parseFloat(item.rate),
+        quantity: parseInt(item.quantity),
+        gstRate: item.gstRate ? parseFloat(item.gstRate) : undefined
+      }))
     };
 
     if (sendEmail && customerEmail) {
-      invoiceData.email = {
+      (invoiceData as any).email = {
         to: {
           name: customerName,
           email: customerEmail
@@ -71,50 +85,22 @@ export async function POST(request: NextRequest) {
       };
     }
 
+    console.log('📄 Creating invoice:', JSON.stringify(invoiceData, null, 2));
+
     const invoice = await createInvoice(invoiceData);
-
-    if (userId || paymentId) {
-      const invoiceRecord = {
-        refrensInvoiceId: invoice._id,
-        invoiceNumber: invoice.invoiceNumber,
-        customerName,
-        customerEmail,
-        amount: invoice.finalTotal?.total || 0,
-        status: invoice.status,
-        pdfLink: invoice.share?.pdf,
-        viewLink: invoice.share?.link,
-        createdAt: new Date().toISOString(),
-        createdBy: decodedToken.uid,
-        userId: userId || null,
-        paymentId: paymentId || null
-      };
-
-      await adminFirestore.collection('refrens_invoices').doc(invoice._id).set(invoiceRecord);
-
-      if (paymentId) {
-        await adminFirestore.collection('payments').doc(paymentId).update({
-          refrensInvoiceId: invoice._id,
-          invoiceGeneratedAt: new Date().toISOString()
-        });
-      }
-    }
 
     return NextResponse.json({
       success: true,
-      data: {
-        invoiceId: invoice._id,
-        invoiceNumber: invoice.invoiceNumber,
-        status: invoice.status,
-        total: invoice.finalTotal?.total,
-        pdfLink: invoice.share?.pdf,
-        viewLink: invoice.share?.link
-      }
+      data: invoice
     });
 
   } catch (error: any) {
     console.error('Error generating Refrens invoice:', error);
     return NextResponse.json(
-      { error: 'Failed to generate invoice', details: error.message },
+      { 
+        success: false, 
+        error: error.message || 'Failed to generate invoice' 
+      },
       { status: 500 }
     );
   }
