@@ -90,25 +90,49 @@ export async function POST(request: NextRequest) {
       });
 
       try {
-        const invoiceResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000'}/api/invoice/zoho/generate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId,
-            amount,
-            paymentId: merchantTransactionId,
-            transactionId
-          })
+        const userDoc = await adminFirestore.collection('users').doc(userId).get();
+        const userData = userDoc.data();
+        const userName = userData?.name || 'Customer';
+        const userEmail = userData?.email || '';
+        const userPhone = userData?.phone || '';
+
+        const { generateAutoInvoice } = await import('@/lib/refrens-helper');
+        
+        const refrensInvoice = await generateAutoInvoice(
+          userName,
+          userEmail,
+          userPhone,
+          amount,
+          `Credit Purchase - ${amount} credits`,
+          merchantTransactionId,
+          true
+        );
+
+        await paymentRef.update({
+          refrensInvoiceId: refrensInvoice._id,
+          invoiceNumber: refrensInvoice.invoiceNumber,
+          invoicePdfLink: refrensInvoice.share?.pdf,
+          invoiceViewLink: refrensInvoice.share?.link,
+          invoiceGeneratedAt: new Date().toISOString()
         });
 
-        if (invoiceResponse.ok) {
-          const invoiceData = await invoiceResponse.json();
-          await paymentRef.update({
-            zohoInvoiceId: invoiceData.data?.invoiceId
-          });
-        }
+        await adminFirestore.collection('refrens_invoices').doc(refrensInvoice._id).set({
+          refrensInvoiceId: refrensInvoice._id,
+          invoiceNumber: refrensInvoice.invoiceNumber,
+          customerName: userName,
+          customerEmail: userEmail,
+          amount: refrensInvoice.finalTotal?.total || amount,
+          status: refrensInvoice.status,
+          pdfLink: refrensInvoice.share?.pdf,
+          viewLink: refrensInvoice.share?.link,
+          createdAt: new Date().toISOString(),
+          userId,
+          paymentId: merchantTransactionId,
+          phonePeTransactionId: transactionId
+        });
+
       } catch (invoiceError) {
-        console.error('Invoice generation failed:', invoiceError);
+        console.error('Refrens invoice generation failed:', invoiceError);
       }
 
       return NextResponse.json({ success: true });

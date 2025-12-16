@@ -208,7 +208,45 @@ The seed operation creates:
 - 5 Customers with credit history and transactions
 - Sample payment records
 
-## Recent Changes (November 17, 2025)
+## Recent Changes (December 16, 2025)
+
+### Refrens Invoice API Integration
+Added comprehensive Refrens invoice management system with:
+- Full Refrens API integration for auto-invoicing
+- Admin panel invoice management with analytics
+- Manual invoice creation for admins
+- Invoice list view with search and filtering
+- Auto-invoicing on successful payments
+
+**New API Routes**:
+- `POST /api/invoice/refrens/generate` - Create new invoice
+- `GET /api/invoice/refrens/list` - List all invoices with pagination
+- `GET /api/invoice/refrens/get` - Get single invoice details
+- `POST /api/invoice/refrens/cancel` - Cancel an invoice
+- `GET /api/invoice/refrens/analytics` - Invoice analytics data
+
+**New Helper Library**:
+- `lib/refrens-helper.ts` - Refrens API authentication and invoice operations
+
+**New UI Pages**:
+- `/admin_panel/invoices` - Invoice management dashboard with analytics
+- `/admin_panel/invoices/create` - Create new invoice form
+
+**Environment Variables Required**:
+```env
+REFRENS_URL_KEY=your-url-key
+REFRENS_APP_ID=your-app-id
+REFRENS_APP_SECRET=your-app-secret
+```
+
+**Firestore Collection**:
+- `refrens_invoices/{invoiceId}` - Stores invoice records linked to payments
+
+**Updated Payment Webhook**:
+- Auto-generates Refrens invoice on successful PhonePe payment
+- Links invoice to payment record
+
+## Previous Changes (November 17, 2025)
 
 ### New Authentication & User Management APIs
 Added comprehensive authentication system:

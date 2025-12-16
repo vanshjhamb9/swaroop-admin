@@ -102,6 +102,17 @@ export default function DealerAdminPanel({
         </ListItem>
         <ListItem
           component={Link}
+          href="/admin_panel/invoices"
+          sx={{
+            "&:hover": {
+              backgroundColor: "#374151",
+            },
+          }}
+        >
+          <ListItemText primary="Invoices" />
+        </ListItem>
+        <ListItem
+          component={Link}
           href="/admin_panel/manage_dealers"
           sx={{
             "&:hover": {
