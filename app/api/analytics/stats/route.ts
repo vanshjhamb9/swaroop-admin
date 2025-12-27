@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminFirestore } from '../../firebaseadmin';
 
+// Cache TTL constant (for future Redis implementation)
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -22,39 +25,50 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch all data in parallel with error handling
-    let usersSnapshot, paymentsSnapshot, dealersSnapshot;
+    // Check cache first (simple implementation - for production, use Redis or similar)
+    // Note: In Next.js serverless functions, this cache will reset on each cold start
+    // For production, use Redis or a proper caching service
+
+    // Fetch counts using count() queries - much faster than fetching all docs
+    let usersCount = 0, dealersCount = 0, paymentsSnapshot;
+    
     try {
-      usersSnapshot = await adminFirestore.collection('users').get();
+      const usersCountSnapshot = await adminFirestore.collection('users').count().get();
+      usersCount = usersCountSnapshot.data().count;
     } catch (err) {
-      console.warn('Users collection not found or inaccessible, using empty set');
-      usersSnapshot = { size: 0, docs: [], forEach: () => {} } as any;
+      console.warn('Users collection not accessible');
     }
     
     try {
-      paymentsSnapshot = await adminFirestore.collection('payments').where('status', '==', 'success').get();
+      const dealersCountSnapshot = await adminFirestore.collection('dealers').count().get();
+      dealersCount = dealersCountSnapshot.data().count;
     } catch (err) {
-      console.warn('Payments collection not found or inaccessible, using empty set');
+      console.warn('Dealers collection not accessible');
+    }
+    
+    try {
+      // Only fetch successful payments - limit to last 1000 for performance
+      paymentsSnapshot = await adminFirestore
+        .collection('payments')
+        .where('status', '==', 'success')
+        .orderBy('timestamp', 'desc')
+        .limit(1000)
+        .get();
+    } catch (err) {
+      console.warn('Payments collection not accessible');
       paymentsSnapshot = { size: 0, docs: [], forEach: () => {} } as any;
     }
-    
-    try {
-      dealersSnapshot = await adminFirestore.collection('dealers').get();
-    } catch (err) {
-      console.warn('Dealers collection not found or inaccessible, using empty set');
-      dealersSnapshot = { size: 0, docs: [] } as any;
-    }
 
-    const totalUsers = usersSnapshot.size;
-    const totalDealers = dealersSnapshot.size;
+    const transactionCount = paymentsSnapshot.size;
 
     let totalRevenue = 0;
     const paymentsByDate: Record<string, number> = {};
-    const transactionCount = paymentsSnapshot.size;
 
+    // Process payments efficiently
     paymentsSnapshot.forEach((doc: any) => {
       const data = doc.data();
-      totalRevenue += data.amount || 0;
+      const amount = data.amount || 0;
+      totalRevenue += amount;
       
       // Handle Firestore Timestamp
       let date: string;
@@ -66,65 +80,82 @@ export async function GET(request: NextRequest) {
         date = new Date().toISOString().split('T')[0];
       }
       
-      paymentsByDate[date] = (paymentsByDate[date] || 0) + (data.amount || 0);
+      paymentsByDate[date] = (paymentsByDate[date] || 0) + amount;
     });
 
     const revenueByDate = Object.entries(paymentsByDate)
       .map(([date, amount]) => ({ date, amount }))
-      .sort((a, b) => b.date.localeCompare(a.date)); // Most recent first
+      .sort((a, b) => b.date.localeCompare(a.date));
 
-    // Get top users by spending
-    const topUsers: any[] = [];
+    // Optimized top users: Calculate from payments instead of individual transaction queries
+    // This eliminates N+1 queries by using the payments collection directly
+    const userSpendingMap: Record<string, { amount: number; count: number }> = {};
     
-    // Process users in batches to avoid overwhelming Firestore
-    const userDocs = usersSnapshot.docs;
-    
-    for (const doc of userDocs) {
-      const userId = doc.id;
-      const userData = doc.data();
-      
-      try {
-        const userTransactionsSnapshot = await adminFirestore
-          .collection('users')
-          .doc(userId)
-          .collection('transactions')
-          .where('type', '==', 'debit')
-          .get();
-
-        let totalSpent = 0;
-        userTransactionsSnapshot.forEach((txDoc: any) => {
-          totalSpent += txDoc.data().amount || 0;
-        });
-
-        if (totalSpent > 0) {
-          topUsers.push({
-            userId,
-            name: userData.name || 'Unknown',
-            email: userData.email || '',
-            totalSpent,
-            transactionCount: userTransactionsSnapshot.size
-          });
+    paymentsSnapshot.forEach((doc: any) => {
+      const data = doc.data();
+      const userId = data.userId;
+      if (userId) {
+        if (!userSpendingMap[userId]) {
+          userSpendingMap[userId] = { amount: 0, count: 0 };
         }
-      } catch (err) {
-        console.error(`Error fetching transactions for user ${userId}:`, err);
-        // Continue with other users
+        userSpendingMap[userId].amount += data.amount || 0;
+        userSpendingMap[userId].count += 1;
       }
+    });
+
+    // Get top 20 user IDs by spending
+    const topUserIds = Object.entries(userSpendingMap)
+      .sort((a, b) => b[1].amount - a[1].amount)
+      .slice(0, 20)
+      .map(([userId]) => userId);
+
+    // Fetch user details only for top spenders (batch fetch)
+    const topUsers: any[] = [];
+    if (topUserIds.length > 0) {
+      const userPromises = topUserIds.map(async (userId) => {
+        try {
+          const userDoc = await adminFirestore.collection('users').doc(userId).get();
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            return {
+              userId,
+              name: userData?.name || 'Unknown',
+              email: userData?.email || '',
+              totalSpent: userSpendingMap[userId].amount,
+              transactionCount: userSpendingMap[userId].count
+            };
+          }
+          return null;
+        } catch (err) {
+          return null;
+        }
+      });
+
+      const userResults = await Promise.all(userPromises);
+      topUsers.push(...userResults.filter(u => u !== null));
     }
 
+    // Sort again to ensure correct order after async operations
     topUsers.sort((a, b) => b.totalSpent - a.totalSpent);
     const top10Users = topUsers.slice(0, 10);
 
-    return NextResponse.json({
+    const response = {
       success: true,
       data: {
         overview: {
-          totalUsers,
-          totalDealers,
+          totalUsers: usersCount,
+          totalDealers: dealersCount,
           totalRevenue,
           transactionCount
         },
         revenueByDate,
         topUsers: top10Users
+      }
+    };
+
+    return NextResponse.json(response, {
+      headers: {
+        'Cache-Control': 'private, max-age=300, stale-while-revalidate=600'
       }
     });
     

@@ -7,47 +7,72 @@ export async function GET(request: NextRequest) {
     const decodedToken = await verifyAuthToken(request);
     requireAdmin(decodedToken);
 
-    let adminsSnapshot, dealersSnapshot;
+    // Use count() queries instead of fetching all documents - much faster
+    let totalAdmins = 0, totalDealers = 0, totalVehicles = 0;
     
     try {
-      adminsSnapshot = await adminFirestore.collection('admins').get();
+      const adminsCountSnapshot = await adminFirestore.collection('admins').count().get();
+      totalAdmins = adminsCountSnapshot.data().count;
     } catch (err) {
-      console.warn('Admins collection not accessible, using empty set');
-      adminsSnapshot = { size: 0, docs: [] } as any;
+      console.warn('Admins collection not accessible');
     }
     
     try {
-      dealersSnapshot = await adminFirestore.collection('dealers').get();
+      const dealersCountSnapshot = await adminFirestore.collection('dealers').count().get();
+      totalDealers = dealersCountSnapshot.data().count;
     } catch (err) {
-      console.warn('Dealers collection not accessible, using empty set');
-      dealersSnapshot = { size: 0, docs: [] } as any;
+      console.warn('Dealers collection not accessible');
     }
 
-    const totalAdmins = adminsSnapshot.size || 0;
-    const totalDealers = dealersSnapshot.size || 0;
+    // For vehicle count, use a more efficient approach:
+    // Option 1: Store vehicle count in dealers document (recommended for production)
+    // Option 2: Use collection group query (if vehicles have consistent structure)
+    // Option 3: Batch fetch with limit (current optimized approach)
+    try {
+      // Fetch only dealer IDs for batch processing
+      const dealersSnapshot = await adminFirestore.collection('dealers')
+        .limit(100) // Limit to prevent timeout on large datasets
+        .get();
 
-    let totalVehicles = 0;
-    if (dealersSnapshot.docs && Array.isArray(dealersSnapshot.docs)) {
-      for (const dealerDoc of dealersSnapshot.docs) {
-        try {
-          const vehiclesSnapshot = await adminFirestore
-            .collection('dealers')
-            .doc(dealerDoc.id)
-            .collection('vehicles')
-            .get();
-          totalVehicles += vehiclesSnapshot.size;
-        } catch (err) {
-          console.warn(`Could not fetch vehicles for dealer ${dealerDoc.id}`);
-        }
+      // Process vehicle counts in parallel batches
+      const batchSize = 10;
+      const dealerDocs = dealersSnapshot.docs;
+      
+      for (let i = 0; i < dealerDocs.length; i += batchSize) {
+        const batch = dealerDocs.slice(i, i + batchSize);
+        const batchPromises = batch.map(async (dealerDoc) => {
+          try {
+            const vehiclesSnapshot = await adminFirestore
+              .collection('dealers')
+              .doc(dealerDoc.id)
+              .collection('vehicles')
+              .count()
+              .get();
+            return vehiclesSnapshot.data().count || 0;
+          } catch (err) {
+            return 0;
+          }
+        });
+        
+        const batchResults = await Promise.all(batchPromises);
+        totalVehicles += batchResults.reduce((sum, count) => sum + count, 0);
       }
+    } catch (err) {
+      console.warn('Could not fetch vehicle counts');
     }
 
-    return NextResponse.json({
+    const response = {
       success: true,
       data: {
         totalAdmins,
         totalDealers,
         totalVehicles
+      }
+    };
+
+    return NextResponse.json(response, {
+      headers: {
+        'Cache-Control': 'private, max-age=300, stale-while-revalidate=600'
       }
     });
     

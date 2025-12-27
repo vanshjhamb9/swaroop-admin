@@ -8,14 +8,11 @@ let auth;
 function initializeFirebaseAdmin() {
   // Check if already initialized
   if (admin.apps.length > 0) {
-    console.log('✅ Firebase Admin already initialized');
     app = admin.apps[0];
     db = admin.firestore();
     auth = admin.auth();
     return { app, db, auth };
   }
-
-  console.log('🔧 Initializing Firebase Admin...');
 
   // Initialize the app
   try {
@@ -39,37 +36,26 @@ function initializeFirebaseAdmin() {
       throw new Error('Missing required Firebase Admin credentials. Check your .env file.');
     }
 
-    console.log('📝 Project ID:', serviceAccount.project_id);
-    console.log('📧 Client Email:', serviceAccount.client_email);
-    console.log('🔑 Private Key Length:', process.env.FIREBASE_ADMIN_PRIVATE_KEY?.length || 'undefined');
-    console.log('🔑 Private Key Starts:', process.env.FIREBASE_ADMIN_PRIVATE_KEY?.substring(0, 50));
-    console.log('🔑 Private Key Ends:', process.env.FIREBASE_ADMIN_PRIVATE_KEY?.substring(-50));
-
     app = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-      // Explicitly set the database URL
       databaseURL: `https://${process.env.FIREBASE_ADMIN_PROJECT_ID}.firebaseio.com`
     });
 
-    // Get Firestore instance
+    // Get Firestore instance with optimized settings
     db = admin.firestore();
 
     // Configure Firestore settings ONLY on first initialization
     db.settings({
       ignoreUndefinedProperties: true,
-      // Ensure we're using the correct host
       host: 'firestore.googleapis.com',
       ssl: true
     });
 
     // Get Auth instance
     auth = admin.auth();
-
-    console.log('✅ Firebase Admin initialized successfully');
-    console.log('🔥 Firestore connected to project:', process.env.FIREBASE_ADMIN_PROJECT_ID);
   } catch (error) {
-    console.error('❌ Error initializing Firebase Admin:', error);
+    console.error('Error initializing Firebase Admin:', error);
     throw error;
   }
 

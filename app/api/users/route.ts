@@ -37,15 +37,35 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    const totalCountSnapshot = await adminFirestore.collection('users').count().get();
+    // Make total count optional via query parameter (expensive operation)
+    const includeTotal = searchParams.get('includeTotal') === 'true';
+    let total = undefined;
+    
+    if (includeTotal) {
+      try {
+        const totalCountSnapshot = await adminFirestore.collection('users').count().get();
+        total = totalCountSnapshot.data().count;
+      } catch (err) {
+        // If count fails, just skip it
+      }
+    }
 
-    return NextResponse.json({
+    const response: any = {
       success: true,
       data: {
         users,
-        total: totalCountSnapshot.data().count,
         limit,
         hasMore: snapshot.size === limit
+      }
+    };
+
+    if (total !== undefined) {
+      response.data.total = total;
+    }
+
+    return NextResponse.json(response, {
+      headers: {
+        'Cache-Control': 'private, max-age=60, stale-while-revalidate=120'
       }
     });
     

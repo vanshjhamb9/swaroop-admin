@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     const userData = userDoc.data();
     
-    return NextResponse.json({
+    const response = {
       success: true,
       data: {
         userId,
@@ -45,6 +45,12 @@ export async function GET(request: NextRequest) {
         creditBalance: userData?.creditBalance || 0,
         createdAt: userData?.createdAt,
         updatedAt: userData?.updatedAt
+      }
+    };
+
+    return NextResponse.json(response, {
+      headers: {
+        'Cache-Control': 'private, max-age=30, stale-while-revalidate=60'
       }
     });
     
