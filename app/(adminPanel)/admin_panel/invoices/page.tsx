@@ -24,7 +24,11 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  InputAdornment
+  InputAdornment,
+  FormControl,
+  Select,
+  MenuItem,
+  InputLabel
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -33,7 +37,8 @@ import {
   Download as DownloadIcon,
   Share as ShareIcon,
   Search as SearchIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
+  Edit as EditIcon
 } from '@mui/icons-material';
 import { getAuth } from 'firebase/auth';
 import { toast } from 'react-toastify';
@@ -83,6 +88,10 @@ export default function InvoicesPage() {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editStatus, setEditStatus] = useState<string>('');
+  const [editPaymentLink, setEditPaymentLink] = useState<string>('');
+  const [editLoading, setEditLoading] = useState(false);
 
   const fetchInvoices = async () => {
     try {
@@ -171,6 +180,60 @@ export default function InvoicesPage() {
       toast.error(err.message);
     } finally {
       setCancelLoading(false);
+    }
+  };
+
+  const handleOpenEditDialog = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setEditStatus(invoice.status);
+    setEditPaymentLink('');
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateInvoiceStatus = async () => {
+    if (!selectedInvoice) return;
+
+    try {
+      setEditLoading(true);
+      const auth = getAuth();
+      const user = auth.currentUser;
+
+      if (!user) {
+        toast.error('Not authenticated');
+        return;
+      }
+
+      const token = await user.getIdToken();
+
+      const response = await fetch('/api/invoice/refrens/update-status', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          invoiceId: selectedInvoice._id,
+          status: editStatus,
+          paymentLink: editPaymentLink || undefined
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Invoice status updated successfully');
+        setEditDialogOpen(false);
+        setSelectedInvoice(null);
+        setEditStatus('');
+        setEditPaymentLink('');
+        fetchInvoices();
+      } else {
+        throw new Error(result.error || 'Failed to update invoice status');
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -402,6 +465,15 @@ export default function InvoicesPage() {
                           </IconButton>
                         </Tooltip>
                       )}
+                      <Tooltip title="Edit Payment Status">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => handleOpenEditDialog(invoice)}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                       {invoice.status !== 'CANCELED' && invoice.status !== 'PAID' && (
                         <Tooltip title="Cancel Invoice">
                           <IconButton
@@ -460,6 +532,49 @@ export default function InvoicesPage() {
             disabled={cancelLoading}
           >
             {cancelLoading ? <CircularProgress size={24} /> : 'Yes, Cancel Invoice'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Invoice Payment Status</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Invoice: <strong>{selectedInvoice?.invoiceNumber}</strong>
+          </Typography>
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel>Payment Status</InputLabel>
+            <Select
+              value={editStatus}
+              label="Payment Status"
+              onChange={(e) => setEditStatus(e.target.value)}
+            >
+              <MenuItem value="UNPAID">Unpaid</MenuItem>
+              <MenuItem value="PAID">Paid</MenuItem>
+              <MenuItem value="PARTIALLY_PAID">Partially Paid</MenuItem>
+              <MenuItem value="CANCELED">Canceled</MenuItem>
+            </Select>
+          </FormControl>
+          <TextField
+            fullWidth
+            label="Payment Link (Optional)"
+            value={editPaymentLink}
+            onChange={(e) => setEditPaymentLink(e.target.value)}
+            margin="normal"
+            placeholder="https://payment.example.com/pay/..."
+            helperText="Update payment gateway link for this invoice"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialogOpen(false)} disabled={editLoading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleUpdateInvoiceStatus}
+            variant="contained"
+            disabled={editLoading}
+          >
+            {editLoading ? <CircularProgress size={24} /> : 'Update Status'}
           </Button>
         </DialogActions>
       </Dialog>

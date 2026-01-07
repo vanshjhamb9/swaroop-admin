@@ -12,7 +12,8 @@ export async function POST(request: NextRequest) {
     const decodedToken = await adminAuth.verifyIdToken(token);
     const dealerId = decodedToken.uid;
     
-    const { name, model, registration } = await request.json();
+    const body = await request.json();
+    const { name, model, registration, imageCount } = body;
     
     if (!name || !model || !registration) {
       return NextResponse.json(
@@ -30,6 +31,7 @@ export async function POST(request: NextRequest) {
         model,
         registration,
         images: [],
+        imageCount: imageCount || 0,
         createdAt: admin.firestore.Timestamp.now(),
         updatedAt: admin.firestore.Timestamp.now()
       });

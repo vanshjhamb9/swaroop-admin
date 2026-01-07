@@ -91,7 +91,7 @@ export default function DealerAdminPanel({
         </ListItem>
         <ListItem
           component={Link}
-          href="/analytics"
+          href="/admin_panel/analytics"
           sx={{
             "&:hover": {
               backgroundColor: "#374151",
@@ -143,6 +143,17 @@ export default function DealerAdminPanel({
           }}
         >
           <ListItemText primary="Create Admin" />
+        </ListItem>
+        <ListItem
+          component={Link}
+          href="/admin_panel/credit-management"
+          sx={{
+            "&:hover": {
+              backgroundColor: "#374151",
+            },
+          }}
+        >
+          <ListItemText primary="Credit Management" />
         </ListItem>
         <ListItem
           component={Link}

@@ -57,6 +57,8 @@ export default function CreateInvoicePage() {
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [invoiceTitle, setInvoiceTitle] = useState('Tax Invoice');
+  const [ccEmails, setCcEmails] = useState('');
+  const [paymentLink, setPaymentLink] = useState('');
   
   const [customerAddress, setCustomerAddress] = useState<CustomerAddress>({
     street: '',
@@ -167,7 +169,7 @@ export default function CreateInvoicePage() {
         addressData.gstState = customerAddress.gstState; // This MUST be the numeric code like "29"
       }
 
-      const requestBody = {
+      const requestBody: any = {
         customerName: customerName.trim(),
         customerEmail: customerEmail.trim(),
         customerPhone: customerPhone.trim(),
@@ -177,6 +179,16 @@ export default function CreateInvoicePage() {
         sendEmail,
         currency: 'INR'
       };
+
+      // Add CC emails if provided
+      if (ccEmails.trim()) {
+        requestBody.ccEmails = ccEmails.trim();
+      }
+
+      // Add payment link if provided
+      if (paymentLink.trim()) {
+        requestBody.paymentLink = paymentLink.trim();
+      }
 
       console.log('🔍 Sending request:', JSON.stringify(requestBody, null, 2));
 

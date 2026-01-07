@@ -11,13 +11,15 @@
 1. [Authentication](#authentication)
 2. [Environment Setup](#environment-setup)
 3. [Authentication & User Management](#authentication--user-management)
-4. [Credit System APIs](#credit-system-apis)
-5. [Payment APIs](#payment-apis)
-6. [Vehicle Management APIs](#vehicle-management-apis)
-7. [Dealer Management APIs](#dealer-management-apis)
-8. [Invoice APIs](#invoice-apis)
-9. [Analytics APIs](#analytics-apis)
-10. [Admin APIs](#admin-apis)
+4. [Configuration APIs](#configuration-apis) ⭐ NEW
+5. [Image Processing APIs](#image-processing-apis) ⭐ NEW
+6. [Credit System APIs](#credit-system-apis)
+7. [Payment APIs](#payment-apis)
+8. [Vehicle Management APIs](#vehicle-management-apis)
+9. [Dealer Management APIs](#dealer-management-apis)
+10. [Invoice APIs](#invoice-apis)
+11. [Analytics APIs](#analytics-apis)
+12. [Admin APIs](#admin-apis)
 
 ---
 
@@ -313,6 +315,84 @@ Authorization: Bearer <firebase-id-token>
   "uid": "admin123"
 }
 ```
+
+---
+
+## Configuration APIs ⭐ NEW
+
+### 1. Get App Configuration
+**GET** `/api/config/app`
+
+Get dynamic configuration values including credit rates, app update information, and feature flags.
+
+**Query Parameters:**
+- `appVersion` (required): Current app version (e.g., "1.2.3")
+- `platform` (required): "ios" or "android"
+
+**Response:** See [CONFIGURATION_API_DOCUMENTATION.md](./CONFIGURATION_API_DOCUMENTATION.md) for full details.
+
+---
+
+### 2. Get Configuration (Admin)
+**GET** `/api/config/manage`
+
+Get current configuration for admin panel editing. **Requires admin authentication.**
+
+**Response:** See [CONFIGURATION_API_DOCUMENTATION.md](./CONFIGURATION_API_DOCUMENTATION.md) for full details.
+
+---
+
+### 3. Update Configuration (Admin)
+**PUT** `/api/config/manage`
+
+Update app configuration. **Requires admin authentication.**
+
+**Response:** See [CONFIGURATION_API_DOCUMENTATION.md](./CONFIGURATION_API_DOCUMENTATION.md) for full details.
+
+---
+
+## Image Processing APIs ⭐ NEW
+
+### 4. Estimate Processing Credits
+**GET** `/api/image/process/estimate`
+
+Estimate credits required for image processing without deducting credits.
+
+**Query Parameters:**
+- `imageCount` (required): Number of images
+- `processingType` (required): "singleImage" or "multipleImages"
+
+**Response:** See [CONFIGURATION_API_DOCUMENTATION.md](./CONFIGURATION_API_DOCUMENTATION.md) for full details.
+
+---
+
+### 5. Process Images
+**POST** `/api/image/process`
+
+Process images with automatic credit deduction based on configuration.
+
+**Request Body:**
+```json
+{
+  "imageCount": 15,
+  "processingType": "multipleImages",
+  "imageUrls": ["https://example.com/image1.jpg", "..."]
+}
+```
+
+**Response:** See [CONFIGURATION_API_DOCUMENTATION.md](./CONFIGURATION_API_DOCUMENTATION.md) for full details.
+
+---
+
+### 6. Get Processing Job Status
+**GET** `/api/image/process/status`
+
+Get status of an image processing job.
+
+**Query Parameters:**
+- `jobId` (required): Processing job ID
+
+**Response:** See [CONFIGURATION_API_DOCUMENTATION.md](./CONFIGURATION_API_DOCUMENTATION.md) for full details.
 
 ---
 

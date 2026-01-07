@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminFirestore } from '../../firebaseadmin';
+import * as admin from 'firebase-admin';
 
 // Cache TTL constant (for future Redis implementation)
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -25,6 +26,23 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get date filters from query params
+    const { searchParams } = new URL(request.url);
+    const startDateParam = searchParams.get('startDate');
+    const endDateParam = searchParams.get('endDate');
+    
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+    
+    if (startDateParam) {
+      startDate = new Date(startDateParam);
+      startDate.setHours(0, 0, 0, 0);
+    }
+    if (endDateParam) {
+      endDate = new Date(endDateParam);
+      endDate.setHours(23, 59, 59, 999);
+    }
+
     // Check cache first (simple implementation - for production, use Redis or similar)
     // Note: In Next.js serverless functions, this cache will reset on each cold start
     // For production, use Redis or a proper caching service
@@ -47,13 +65,56 @@ export async function GET(request: NextRequest) {
     }
     
     try {
-      // Only fetch successful payments - limit to last 1000 for performance
-      paymentsSnapshot = await adminFirestore
+      // Build query with date filters
+      // Note: Firestore requires composite index for multiple where clauses
+      // For now, fetch all and filter in memory if both dates provided
+      let paymentsQuery: any = adminFirestore
         .collection('payments')
-        .where('status', '==', 'success')
-        .orderBy('timestamp', 'desc')
-        .limit(1000)
-        .get();
+        .where('status', '==', 'success');
+      
+      // Apply date filters - Firestore limitation: can only use one range filter
+      // If both dates provided, filter in memory after fetching
+      if (startDate && !endDate) {
+        paymentsQuery = paymentsQuery
+          .where('timestamp', '>=', admin.firestore.Timestamp.fromDate(startDate))
+          .orderBy('timestamp', 'desc')
+          .limit(1000);
+      } else if (endDate && !startDate) {
+        paymentsQuery = paymentsQuery
+          .where('timestamp', '<=', admin.firestore.Timestamp.fromDate(endDate))
+          .orderBy('timestamp', 'desc')
+          .limit(1000);
+      } else {
+        // If both dates or neither, fetch all and filter in memory
+        paymentsQuery = paymentsQuery.orderBy('timestamp', 'desc').limit(1000);
+      }
+      
+      paymentsSnapshot = await paymentsQuery.get();
+      
+      // Filter in memory if both dates provided
+      if (startDate && endDate) {
+        const filteredDocs = paymentsSnapshot.docs.filter((doc: any) => {
+          const data = doc.data();
+          let timestamp: Date | null = null;
+          
+          if (data.timestamp?.toDate) {
+            timestamp = data.timestamp.toDate();
+          } else if (data.timestamp) {
+            timestamp = new Date(data.timestamp);
+          }
+          
+          if (!timestamp) return false;
+          
+          return timestamp >= startDate && timestamp <= endDate;
+        });
+        
+        // Create a filtered snapshot-like object
+        paymentsSnapshot = {
+          size: filteredDocs.length,
+          docs: filteredDocs,
+          forEach: (callback: any) => filteredDocs.forEach(callback),
+        } as any;
+      }
     } catch (err) {
       console.warn('Payments collection not accessible');
       paymentsSnapshot = { size: 0, docs: [], forEach: () => {} } as any;

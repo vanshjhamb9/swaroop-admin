@@ -13,7 +13,9 @@ export async function POST(request: NextRequest) {
       invoiceTitle,
       items,
       sendEmail,
-      currency
+      currency,
+      ccEmails,
+      paymentLink
     } = body;
 
     if (!customerName) {
@@ -77,21 +79,78 @@ export async function POST(request: NextRequest) {
     };
 
     if (sendEmail && customerEmail) {
-      (invoiceData as any).email = {
+      const emailConfig: any = {
         to: {
           name: customerName,
           email: customerEmail
         }
       };
+
+      // Handle CC emails - support comma or semicolon separated, or array
+      if (ccEmails) {
+        let ccArray: string[] = [];
+        
+        if (Array.isArray(ccEmails)) {
+          ccArray = ccEmails.filter(email => email && email.trim());
+        } else if (typeof ccEmails === 'string') {
+          // Split by comma or semicolon
+          ccArray = ccEmails.split(/[,;]/).map(email => email.trim()).filter(Boolean);
+        }
+
+        if (ccArray.length > 0) {
+          emailConfig.cc = ccArray.map(email => ({ email }));
+        }
+      }
+
+      invoiceData.email = emailConfig;
     }
 
     console.log('📄 Creating invoice:', JSON.stringify(invoiceData, null, 2));
 
     const invoice = await createInvoice(invoiceData);
 
+    // Store invoice in database with payment link if provided
+    if (paymentLink || invoice._id) {
+      try {
+        const authHeader = request.headers.get('authorization');
+        if (authHeader) {
+          const token = authHeader.split('Bearer ')[1];
+          const { adminAuth, adminFirestore } = await import('../../../firebaseadmin');
+          
+          try {
+            const decodedToken = await adminAuth.verifyIdToken(token);
+            
+            await adminFirestore.collection('invoices').doc(invoice._id).set({
+              invoiceId: invoice._id,
+              refrensInvoiceId: invoice._id,
+              invoiceNumber: invoice.invoiceNumber,
+              status: invoice.status,
+              amount: invoice.finalTotal?.total || 0,
+              customerName,
+              customerEmail,
+              ccEmails: ccEmails || null,
+              paymentLink: paymentLink || null,
+              isManual: true,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              createdBy: decodedToken.uid,
+            }, { merge: true });
+          } catch (err) {
+            // If token verification fails, still continue with invoice creation
+            console.warn('Could not save invoice to database:', err);
+          }
+        }
+      } catch (err) {
+        console.warn('Error saving invoice to database:', err);
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      data: invoice
+      data: {
+        ...invoice,
+        paymentLink: paymentLink || null,
+      }
     });
 
   } catch (error: any) {

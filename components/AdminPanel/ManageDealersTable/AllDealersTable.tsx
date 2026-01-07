@@ -52,8 +52,12 @@ function AllDealersTable() {
 
       const result = await response.json();
       
-      if (result.success && Array.isArray(result.data)) {
-        setdealers(result.data);
+      if (result.success) {
+        // Handle both old format (result.data as array) and new format (result.data.dealers)
+        const dealersList = Array.isArray(result.data) 
+          ? result.data 
+          : (result.data?.dealers || []);
+        setdealers(dealersList);
       } else {
         setdealers([]);
       }

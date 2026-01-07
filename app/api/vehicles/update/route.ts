@@ -12,10 +12,21 @@ export async function PUT(request: NextRequest) {
     const decodedToken = await adminAuth.verifyIdToken(token);
     const dealerId = decodedToken.uid;
     
-    const { vehicleId, name, model, registration } = await request.json();
+    const { vehicleId, name, model, registration, imageCount } = await request.json();
     
     if (!vehicleId) {
       return NextResponse.json({ error: 'Vehicle ID required' }, { status: 400 });
+    }
+
+    const updateData: any = {
+      name,
+      model,
+      registration,
+      updatedAt: admin.firestore.Timestamp.now()
+    };
+
+    if (imageCount !== undefined) {
+      updateData.imageCount = imageCount;
     }
 
     await adminFirestore
@@ -23,12 +34,7 @@ export async function PUT(request: NextRequest) {
       .doc(dealerId)
       .collection('vehicles')
       .doc(vehicleId)
-      .update({
-        name,
-        model,
-        registration,
-        updatedAt: admin.firestore.Timestamp.now()
-      });
+      .update(updateData);
 
     return NextResponse.json({ message: 'Vehicle updated successfully' });
   } catch (error: any) {

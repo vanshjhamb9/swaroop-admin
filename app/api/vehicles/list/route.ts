@@ -17,10 +17,19 @@ export async function GET(request: NextRequest) {
       .collection('vehicles')
       .get();
 
-    const vehicles = vehiclesSnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const vehicles = vehiclesSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name || '',
+        model: data.model || '',
+        registration: data.registration || '',
+        images: data.images || [],
+        imageCount: data.imageCount !== undefined ? data.imageCount : (data.images?.length || 0),
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+      };
+    });
 
     return NextResponse.json({ vehicles });
   } catch (error: any) {
