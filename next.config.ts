@@ -25,20 +25,6 @@ const nextConfig: NextConfig = {
       'firebase-admin',
     ],
   },
-  // Headers for caching
-  async headers() {
-    return [
-      {
-        source: '/:path((?!api).*)',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=3600, stale-while-revalidate=86400'
-          }
-        ]
-      }
-    ]
-  }
 };
 
 export default nextConfig;

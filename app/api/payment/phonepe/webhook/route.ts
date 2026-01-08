@@ -98,6 +98,12 @@ export async function POST(request: NextRequest) {
 
         const { generateAutoInvoice } = await import('@/lib/refrens-helper');
         
+        // Save user details to payment doc for analytics optimization
+        await paymentRef.update({
+          userName,
+          userEmail
+        });
+        
         const refrensInvoice = await generateAutoInvoice(
           userName,
           userEmail,

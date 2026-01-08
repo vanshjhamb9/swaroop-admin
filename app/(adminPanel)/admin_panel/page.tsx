@@ -1,6 +1,24 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Paper, Grid, CircularProgress, Alert } from "@mui/material";
+import { 
+  Box, 
+  Typography, 
+  Grid, 
+  CircularProgress, 
+  Alert,
+  Card,
+  CardContent,
+  Stack,
+  useTheme,
+  Fade
+} from "@mui/material";
+import {
+  People as PeopleIcon,
+  DirectionsCar as CarIcon,
+  AdminPanelSettings as AdminIcon,
+  AccountCircle as UserIcon,
+  TrendingUp as TrendingUpIcon
+} from "@mui/icons-material";
 import useAdminOwnerStore from "@/store/adminPanel/AdminOwnersInfo";
 import { getAuth } from "firebase/auth";
 import { toast } from "react-toastify";
@@ -20,7 +38,6 @@ function AdminPage() {
       setLoading(true);
       setError(null);
       
-      // Get auth token
       const auth = getAuth();
       const user = auth.currentUser;
       
@@ -31,7 +48,6 @@ function AdminPage() {
 
       const token = await user.getIdToken();
       
-      // Call API endpoint instead of using client SDK
       const response = await fetch('/api/admin/dashboard', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -66,8 +82,8 @@ function AdminPage() {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-        <CircularProgress size={60} />
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh" bgcolor="#f8fafc">
+        <CircularProgress size={40} thickness={4} />
       </Box>
     );
   }
@@ -75,144 +91,143 @@ function AdminPage() {
   if (error) {
     return (
       <Box sx={{ padding: 4 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
           {error}
         </Alert>
       </Box>
     );
   }
 
+  const StatCard = ({ title, value, icon, color, subtext }: any) => (
+    <Card 
+      sx={{ 
+        height: '100%', 
+        borderRadius: 4,
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)',
+        transition: 'transform 0.2s',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
+        }
+      }}
+    >
+      <CardContent>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+          <Box>
+            <Typography variant="overline" color="text.secondary" fontWeight="600">
+              {title}
+            </Typography>
+            <Typography variant="h3" fontWeight="700" sx={{ mt: 1, mb: 1, color: '#1e293b' }}>
+              {value}
+            </Typography>
+            {subtext && (
+              <Typography variant="body2" color="text.secondary">
+                {subtext}
+              </Typography>
+            )}
+          </Box>
+          <Box 
+            sx={{ 
+              p: 2, 
+              borderRadius: 3, 
+              bgcolor: `${color}.50`, 
+              color: `${color}.main` 
+            }}
+          >
+            {icon}
+          </Box>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <Box
       sx={{
-        padding: 4,
-        backgroundColor: "#f5f5f5",
+        p: { xs: 2, md: 4 },
         minHeight: "100vh",
+        background: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)'
       }}
     >
-      <Typography
-        variant="h4"
-        fontWeight="bold"
-        gutterBottom
-        align="center"
-        sx={{ color: "#333", marginBottom: 4 }}
-      >
-        Welcome to Admin Panel
-      </Typography>
-      <Grid container spacing={4}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            sx={{
-              padding: 4,
-              textAlign: "center",
-              borderRadius: "16px",
-              boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
-              background: "linear-gradient(145deg, #e0e0e0, #ffffff)",
-              ":hover": {
-                transform: "scale(1.05)",
-                transition: "0.3s ease-in-out",
-              },
-              height: 160,
-            }}
-          >
-            <Typography
-              variant="h6"
-              fontWeight="bold"
-              color="primary"
-              gutterBottom
-            >
-              Logged In as
+      <Fade in={true} timeout={800}>
+        <Box>
+          <Box mb={5}>
+            <Typography variant="h4" fontWeight="800" color="#1e293b" gutterBottom>
+              Dashboard Overview
             </Typography>
-            <Typography variant="h6" sx={{ color: "#333" }}>
-              {email || "N/A"}
+            <Typography variant="body1" color="text.secondary">
+              Welcome back, {name || email || 'Admin'}
             </Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            sx={{
-              padding: 4,
-              textAlign: "center",
-              borderRadius: "16px",
-              boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
-              background: "linear-gradient(145deg, #e0e0e0, #ffffff)",
-              ":hover": {
-                transform: "scale(1.05)",
-                transition: "0.3s ease-in-out",
-              },
-              height: 160,
-            }}
-          >
-            <Typography
-              variant="h6"
-              fontWeight="bold"
-              color="primary"
-              gutterBottom
-            >
-              Total Admins
-            </Typography>
-            <Typography variant="h3" fontWeight="bold" sx={{ color: "#1976d2" }}>
-              {totalAdmins}
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            sx={{
-              padding: 4,
-              textAlign: "center",
-              borderRadius: "16px",
-              boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
-              background: "linear-gradient(145deg, #e0e0e0, #ffffff)",
-              ":hover": {
-                transform: "scale(1.05)",
-                transition: "0.3s ease-in-out",
-              },
-              height: 160,
-            }}
-          >
-            <Typography
-              variant="h6"
-              fontWeight="bold"
-              color="primary"
-              gutterBottom
-            >
-              Total Car Dealers
-            </Typography>
-            <Typography variant="h3" fontWeight="bold" sx={{ color: "#1976d2" }}>
-              {registeredDealers}
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper
-            sx={{
-              padding: 4,
-              textAlign: "center",
-              borderRadius: "16px",
-              boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
-              background: "linear-gradient(145deg, #e0e0e0, #ffffff)",
-              ":hover": {
-                transform: "scale(1.05)",
-                transition: "0.3s ease-in-out",
-              },
-              height: 160,
-            }}
-          >
-            <Typography
-              variant="h6"
-              fontWeight="bold"
-              color="primary"
-              gutterBottom
-            >
-              Total Vehicles
-            </Typography>
-            <Typography variant="h3" fontWeight="bold" sx={{ color: "#1976d2" }}>
-              {totalVehicles}
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+          </Box>
+
+          <Grid container spacing={3}>
+            {/* User Profile Card */}
+            <Grid item xs={12} sm={6} md={3}>
+              <Card 
+                sx={{ 
+                  height: '100%', 
+                  borderRadius: 4,
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                  color: 'white',
+                  boxShadow: '0 10px 15px -3px rgba(37, 99, 235, 0.3)'
+                }}
+              >
+                <CardContent>
+                  <Stack height="100%" justifyContent="space-between">
+                    <Box>
+                      <Box sx={{ p: 1, bgcolor: 'rgba(255,255,255,0.2)', borderRadius: 2, width: 'fit-content', mb: 2 }}>
+                        <UserIcon />
+                      </Box>
+                      <Typography variant="overline" sx={{ opacity: 0.8 }} fontWeight="600">
+                        Current Session
+                      </Typography>
+                      <Typography variant="h6" fontWeight="700" noWrap title={email || ''}>
+                        {email || "N/A"}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ mt: 2 }}>
+                      <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                        Role: Administrator
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Stats Cards */}
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                title="System Admins"
+                value={totalAdmins}
+                icon={<AdminIcon fontSize="large" />}
+                color="purple"
+                subtext="Active administrators"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                title="Total Dealers"
+                value={registeredDealers}
+                icon={<PeopleIcon fontSize="large" />}
+                color="success"
+                subtext="Registered partners"
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <StatCard
+                title="Total Vehicles"
+                value={totalVehicles}
+                icon={<CarIcon fontSize="large" />}
+                color="warning"
+                subtext="Inventory count"
+              />
+            </Grid>
+          </Grid>
+        </Box>
+      </Fade>
     </Box>
   );
 }

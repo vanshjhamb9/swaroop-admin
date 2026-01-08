@@ -73,8 +73,7 @@ const Authenticate = () => {
           autoClose: 5000,
           type: "success",
         });
-        // router.back();
-        // router.replace("/admin_panel");
+        router.replace("/admin_panel");
       }
     } catch (e: any) {
       console.log("e", e.message);

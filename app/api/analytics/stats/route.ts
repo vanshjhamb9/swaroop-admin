@@ -8,7 +8,7 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return NextResponse.json(
         { error: 'Missing or invalid authorization header' },
@@ -30,10 +30,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const startDateParam = searchParams.get('startDate');
     const endDateParam = searchParams.get('endDate');
-    
+
     let startDate: Date | null = null;
     let endDate: Date | null = null;
-    
+
     if (startDateParam) {
       startDate = new Date(startDateParam);
       startDate.setHours(0, 0, 0, 0);
@@ -47,78 +47,77 @@ export async function GET(request: NextRequest) {
     // Note: In Next.js serverless functions, this cache will reset on each cold start
     // For production, use Redis or a proper caching service
 
-    // Fetch counts using count() queries - much faster than fetching all docs
-    let usersCount = 0, dealersCount = 0, paymentsSnapshot;
-    
-    try {
-      const usersCountSnapshot = await adminFirestore.collection('users').count().get();
-      usersCount = usersCountSnapshot.data().count;
-    } catch (err) {
-      console.warn('Users collection not accessible');
-    }
-    
-    try {
-      const dealersCountSnapshot = await adminFirestore.collection('dealers').count().get();
-      dealersCount = dealersCountSnapshot.data().count;
-    } catch (err) {
-      console.warn('Dealers collection not accessible');
-    }
-    
-    try {
-      // Build query with date filters
-      // Note: Firestore requires composite index for multiple where clauses
-      // For now, fetch all and filter in memory if both dates provided
-      let paymentsQuery: any = adminFirestore
-        .collection('payments')
-        .where('status', '==', 'success');
-      
-      // Apply date filters - Firestore limitation: can only use one range filter
-      // If both dates provided, filter in memory after fetching
-      if (startDate && !endDate) {
-        paymentsQuery = paymentsQuery
-          .where('timestamp', '>=', admin.firestore.Timestamp.fromDate(startDate))
-          .orderBy('timestamp', 'desc')
-          .limit(1000);
-      } else if (endDate && !startDate) {
-        paymentsQuery = paymentsQuery
-          .where('timestamp', '<=', admin.firestore.Timestamp.fromDate(endDate))
-          .orderBy('timestamp', 'desc')
-          .limit(1000);
-      } else {
-        // If both dates or neither, fetch all and filter in memory
-        paymentsQuery = paymentsQuery.orderBy('timestamp', 'desc').limit(1000);
-      }
-      
-      paymentsSnapshot = await paymentsQuery.get();
-      
-      // Filter in memory if both dates provided
-      if (startDate && endDate) {
-        const filteredDocs = paymentsSnapshot.docs.filter((doc: any) => {
-          const data = doc.data();
-          let timestamp: Date | null = null;
-          
-          if (data.timestamp?.toDate) {
-            timestamp = data.timestamp.toDate();
-          } else if (data.timestamp) {
-            timestamp = new Date(data.timestamp);
-          }
-          
-          if (!timestamp) return false;
-          
-          return timestamp >= startDate && timestamp <= endDate;
-        });
-        
-        // Create a filtered snapshot-like object
-        paymentsSnapshot = {
-          size: filteredDocs.length,
-          docs: filteredDocs,
-          forEach: (callback: any) => filteredDocs.forEach(callback),
-        } as any;
-      }
-    } catch (err) {
-      console.warn('Payments collection not accessible');
-      paymentsSnapshot = { size: 0, docs: [], forEach: () => {} } as any;
-    }
+    // Parallelize all independent fetches
+    const [usersResult, dealersResult, paymentsResult] = await Promise.allSettled([
+      // 1. Users Count
+      adminFirestore.collection('users').count().get(),
+
+      // 2. Dealers Count
+      adminFirestore.collection('dealers').count().get(),
+
+      // 3. Payments Query
+      (async () => {
+        let paymentsQuery: any = adminFirestore
+          .collection('payments')
+          .where('status', '==', 'success')
+          .select('amount', 'timestamp', 'userId', 'userName', 'userEmail', 'status');
+
+        // Apply date filters
+        if (startDate && !endDate) {
+          paymentsQuery = paymentsQuery
+            .where('timestamp', '>=', admin.firestore.Timestamp.fromDate(startDate))
+            .orderBy('timestamp', 'desc')
+            .limit(1000);
+        } else if (endDate && !startDate) {
+          paymentsQuery = paymentsQuery
+            .where('timestamp', '<=', admin.firestore.Timestamp.fromDate(endDate))
+            .orderBy('timestamp', 'desc')
+            .limit(1000);
+        } else {
+          // Default to last 30 days for faster initial load
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+          paymentsQuery = paymentsQuery
+            .where('timestamp', '>=', admin.firestore.Timestamp.fromDate(thirtyDaysAgo))
+            .orderBy('timestamp', 'desc')
+            .limit(1000);
+        }
+
+        const snapshot = await paymentsQuery.get();
+
+        // Filter in memory if both dates provided (rare case for dashboard usage)
+        if (startDate && endDate) {
+          const filteredDocs = snapshot.docs.filter((doc: any) => {
+            const data = doc.data();
+            let timestamp: Date | null = null;
+            if (data.timestamp?.toDate) {
+              timestamp = data.timestamp.toDate();
+            } else if (data.timestamp) {
+              timestamp = new Date(data.timestamp);
+            }
+            return timestamp && timestamp >= startDate && timestamp <= endDate;
+          });
+
+          return {
+            size: filteredDocs.length,
+            docs: filteredDocs,
+            forEach: (callback: any) => filteredDocs.forEach(callback),
+          };
+        }
+        return snapshot;
+      })()
+    ]);
+
+    // Process results
+    let usersCount = usersResult.status === 'fulfilled' ? usersResult.value.data().count : 0;
+    if (usersResult.status === 'rejected') console.warn('Users count failed');
+
+    let dealersCount = dealersResult.status === 'fulfilled' ? dealersResult.value.data().count : 0;
+    if (dealersResult.status === 'rejected') console.warn('Dealers count failed');
+
+    let paymentsSnapshot = paymentsResult.status === 'fulfilled' ? paymentsResult.value : { size: 0, docs: [], forEach: () => { } };
+    if (paymentsResult.status === 'rejected') console.warn('Payments fetch failed', paymentsResult.reason);
 
     const transactionCount = paymentsSnapshot.size;
 
@@ -130,7 +129,7 @@ export async function GET(request: NextRequest) {
       const data = doc.data();
       const amount = data.amount || 0;
       totalRevenue += amount;
-      
+
       // Handle Firestore Timestamp
       let date: string;
       if (data.timestamp && data.timestamp.toDate) {
@@ -140,7 +139,7 @@ export async function GET(request: NextRequest) {
       } else {
         date = new Date().toISOString().split('T')[0];
       }
-      
+
       paymentsByDate[date] = (paymentsByDate[date] || 0) + amount;
     });
 
@@ -151,7 +150,7 @@ export async function GET(request: NextRequest) {
     // Optimized top users: Calculate from payments instead of individual transaction queries
     // This eliminates N+1 queries by using the payments collection directly
     const userSpendingMap: Record<string, { amount: number; count: number }> = {};
-    
+
     paymentsSnapshot.forEach((doc: any) => {
       const data = doc.data();
       const userId = data.userId;
@@ -170,30 +169,63 @@ export async function GET(request: NextRequest) {
       .slice(0, 20)
       .map(([userId]) => userId);
 
+    // Optimized: Check if we have user details in payments (avoiding N+1 queries)
+    const userDetailsMap: Record<string, { name: string; email: string }> = {};
+
+    // Scan payments to find user details (opportunistic cache)
+    paymentsSnapshot.forEach((doc: any) => {
+      const data = doc.data();
+      if (data.userId && data.userName && data.userEmail) {
+        if (!userDetailsMap[data.userId]) {
+          userDetailsMap[data.userId] = {
+            name: data.userName,
+            email: data.userEmail
+          };
+        }
+      }
+    });
+
     // Fetch user details only for top spenders (batch fetch)
     const topUsers: any[] = [];
     if (topUserIds.length > 0) {
-      const userPromises = topUserIds.map(async (userId) => {
-        try {
-          const userDoc = await adminFirestore.collection('users').doc(userId).get();
-          if (userDoc.exists) {
-            const userData = userDoc.data();
-            return {
-              userId,
-              name: userData?.name || 'Unknown',
-              email: userData?.email || '',
-              totalSpent: userSpendingMap[userId].amount,
-              transactionCount: userSpendingMap[userId].count
-            };
-          }
-          return null;
-        } catch (err) {
-          return null;
-        }
-      });
+      // Identify users who need a DB fetch (not in cache)
+      const missingUserIds = topUserIds.filter(id => !userDetailsMap[id]);
+      const fetchedUsersMap: Record<string, { name: string; email: string }> = {};
 
-      const userResults = await Promise.all(userPromises);
-      topUsers.push(...userResults.filter(u => u !== null));
+      // Batch fetch missing users
+      if (missingUserIds.length > 0) {
+        try {
+          const userRefs = missingUserIds.map(id => adminFirestore.collection('users').doc(id));
+          const userSnapshots = await adminFirestore.getAll(...userRefs);
+
+          userSnapshots.forEach(doc => {
+            if (doc.exists) {
+              const userData = doc.data();
+              fetchedUsersMap[doc.id] = {
+                name: userData?.name || 'Unknown',
+                email: userData?.email || ''
+              };
+            }
+          });
+        } catch (err) {
+          console.error('Error batch fetching users:', err);
+        }
+      }
+
+      // Construct the final list
+      topUsers.push(...topUserIds.map(userId => {
+        const details = userDetailsMap[userId] || fetchedUsersMap[userId];
+        if (details) {
+          return {
+            userId,
+            name: details.name,
+            email: details.email,
+            totalSpent: userSpendingMap[userId].amount,
+            transactionCount: userSpendingMap[userId].count
+          };
+        }
+        return null; // Should not happen often if IDs exist
+      }).filter(u => u !== null));
     }
 
     // Sort again to ensure correct order after async operations
@@ -219,7 +251,7 @@ export async function GET(request: NextRequest) {
         'Cache-Control': 'private, max-age=300, stale-while-revalidate=600'
       }
     });
-    
+
   } catch (error: any) {
     console.error('Error fetching analytics:', error);
     return NextResponse.json(

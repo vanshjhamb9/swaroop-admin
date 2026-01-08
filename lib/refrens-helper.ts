@@ -159,6 +159,9 @@ export async function createInvoice(invoiceData: RefrensInvoiceData): Promise<Re
 export interface ListInvoicesOptions {
   limit?: number;
   skip?: number;
+  startDate? : string;
+  endDate? : string;
+
   sortBy?: 'createdAt' | 'invoiceNumber' | 'invoiceDate';
   sortOrder?: 1 | -1;
 }
@@ -170,8 +173,17 @@ export async function listInvoices(options: ListInvoicesOptions = {}): Promise<R
     throw new Error('Refrens URL Key not configured');
   }
 
+ 
+
   const queryParams = new URLSearchParams();
   
+   if(options.startDate){
+    queryParams.append('date_from',options.startDate)
+  }
+  if(options.endDate){
+    queryParams.append('date_to',options.endDate);
+  }
+
   if (options.limit) {
     queryParams.append('$limit', options.limit.toString());
   }

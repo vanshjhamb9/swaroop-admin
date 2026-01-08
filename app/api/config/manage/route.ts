@@ -18,10 +18,29 @@ export async function GET(request: NextRequest) {
       .get();
 
     if (!configDoc.exists) {
-      return NextResponse.json(
-        { error: 'Configuration not found' },
-        { status: 404 }
-      );
+      // Return default config if not found (lazy initialization)
+      return NextResponse.json({
+        success: true,
+        data: {
+          version: '1.0',
+          creditRates: {
+            singleImage: { credits: 10, description: 'Standard processing' },
+            multipleImages: { creditsPerImage: 8, minimumImages: 5, maximumImages: 100 },
+            video: { credits: 50, description: 'Video processing' }
+          },
+          features: {
+            singleImageEnabled: true,
+            multipleImagesEnabled: true,
+            maxUploadSizeMB: 10
+          },
+          appUpdate: {
+            isUpdateRequired: false,
+            forceUpdate: false,
+            latestVersion: '1.0.0',
+            minimumVersion: '1.0.0'
+          }
+        },
+      });
     }
 
     const config = configDoc.data();
@@ -33,14 +52,14 @@ export async function GET(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Error fetching config:', error);
-    
+
     if (error.message === 'Admin access required') {
       return NextResponse.json(
         { error: error.message },
         { status: 403 }
       );
     }
-    
+
     if (error.message === 'Missing or invalid authorization header') {
       return NextResponse.json(
         { error: error.message },
@@ -65,7 +84,7 @@ export async function PUT(request: NextRequest) {
     requireAdmin(decodedToken);
 
     const body = await request.json();
-    
+
     // Validate required fields
     if (!body.creditRates || !body.appUpdate || !body.features) {
       return NextResponse.json(
@@ -132,13 +151,6 @@ export async function PUT(request: NextRequest) {
           credits: 50,
           description: 'Video processing',
         },
-        video: body.creditRates.video ? {
-          credits: Number(body.creditRates.video.credits),
-          description: body.creditRates.video.description || 'Video processing',
-        } : {
-          credits: 50,
-          description: 'Video processing',
-        },
       },
       features: {
         singleImageEnabled: body.features.singleImageEnabled !== false,
@@ -164,7 +176,7 @@ export async function PUT(request: NextRequest) {
 
     // Save to Firestore with history
     const batch = adminFirestore.batch();
-    
+
     // Save current config
     const currentRef = adminFirestore.collection('appConfig').doc('current');
     batch.set(currentRef, config);
@@ -187,14 +199,14 @@ export async function PUT(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Error updating config:', error);
-    
+
     if (error.message === 'Admin access required') {
       return NextResponse.json(
         { error: error.message },
         { status: 403 }
       );
     }
-    
+
     if (error.message === 'Missing or invalid authorization header') {
       return NextResponse.json(
         { error: error.message },

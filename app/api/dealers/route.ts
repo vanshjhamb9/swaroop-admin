@@ -15,8 +15,9 @@ export async function GET(request: NextRequest) {
     let query = adminFirestore
       .collection('dealers')
       .orderBy(orderBy, orderDirection)
-      .limit(limit);
-    
+      .limit(limit)
+      .select('name', 'email', 'contactDetails', 'createdAt');
+
     if (startAfter) {
       try {
         const startDoc = await adminFirestore.collection('dealers').doc(startAfter).get();
@@ -28,11 +29,18 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Parallelize main data fetch and total count estimate
+    const [dealersSnapshotResult, countSnapshotResult] = await Promise.allSettled([
+      query.get(),
+      adminFirestore.collection('dealers').count().get()
+    ]);
+
     let dealersSnapshot;
-    try {
-      dealersSnapshot = await query.get();
-    } catch (err) {
-      console.error('Error fetching dealers:', err);
+
+    if (dealersSnapshotResult.status === 'fulfilled') {
+      dealersSnapshot = dealersSnapshotResult.value;
+    } else {
+      console.error('Error fetching dealers:', dealersSnapshotResult.reason);
       return NextResponse.json({
         success: true,
         data: {
@@ -49,13 +57,10 @@ export async function GET(request: NextRequest) {
       ...doc.data()
     }));
 
-    // Get total count efficiently (optional - can be removed if too slow)
+    // Use count result if available, otherwise just default to 0 (or dealers.length if small)
     let total = 0;
-    try {
-      const countSnapshot = await adminFirestore.collection('dealers').count().get();
-      total = countSnapshot.data().count;
-    } catch (err) {
-      // Count query failed, just skip it
+    if (countSnapshotResult.status === 'fulfilled') {
+      total = countSnapshotResult.value.data().count;
     }
 
     const response = {
@@ -64,7 +69,8 @@ export async function GET(request: NextRequest) {
         dealers,
         total,
         limit,
-        hasMore: dealersSnapshot.size === limit
+        hasMore: dealersSnapshot.size === limit,
+        lastVisible: dealersSnapshot.docs.length > 0 ? dealersSnapshot.docs[dealersSnapshot.docs.length - 1].id : null
       }
     };
 

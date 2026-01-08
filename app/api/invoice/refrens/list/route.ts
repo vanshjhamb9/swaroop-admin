@@ -4,6 +4,12 @@ import { listInvoices, getInvoiceAnalytics } from '@/lib/refrens-helper';
 
 export async function GET(request: NextRequest) {
   try {
+
+
+
+
+
+
     const token = request.headers.get('authorization')?.split(' ')[1];
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -15,6 +21,8 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
+    const startDate = searchParams.get('startDate') || undefined;
+    const endDate = searchParams.get('endDate') || undefined;
     const limit = parseInt(searchParams.get('limit') || '50');
     const skip = parseInt(searchParams.get('skip') || '0');
     const sortBy = searchParams.get('sortBy') as 'createdAt' | 'invoiceNumber' | 'invoiceDate' || 'createdAt';
@@ -24,7 +32,10 @@ export async function GET(request: NextRequest) {
       limit,
       skip,
       sortBy,
-      sortOrder
+      sortOrder,
+      startDate,
+      endDate
+
     });
 
     const analytics = getInvoiceAnalytics(response.data);
@@ -37,6 +48,10 @@ export async function GET(request: NextRequest) {
         limit: response.limit,
         skip: response.skip,
         analytics
+      }
+    }, {
+      headers: {
+        'Cache-Control': 'private, max-age=60, stale-while-revalidate=300'
       }
     });
 

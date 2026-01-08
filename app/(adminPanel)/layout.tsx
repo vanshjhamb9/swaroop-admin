@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import {
   Box,
@@ -36,33 +36,39 @@ export default function DealerAdminPanel({
   const pathname = usePathname();
   const { setinfo } = useAdminOwnerStore();
 
+  const pathnameRef = useRef(pathname);
+
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
+
   useEffect(() => {
     return onAuthStateChanged(auth, async (user) => {
       try {
-        setLoading(true);
         if (user) {
           const tokenResult = await user.getIdTokenResult();
           if (!tokenResult.claims.admin) throw "Unauthorized";
           setIsAdmin(!!tokenResult.claims.admin);
           setinfo({ email: user.email!, name: "", uid: user.uid });
+          setLoading(false);
         } else {
           setIsAdmin(false);
-          if (pathname !== "/admin_panel/Authenticate") {
+          setLoading(false);
+          if (pathnameRef.current !== "/admin_panel/Authenticate") {
             router.replace("/admin_panel/Authenticate");
             toast.error("Unauthorized");
           }
         }
       } catch (e) {
         setIsAdmin(false);
-        if (pathname !== "/admin_panel/Authenticate") {
+        setLoading(false);
+        if (pathnameRef.current !== "/admin_panel/Authenticate") {
           toast.error("Unauthorized Email");
           router.replace("/admin_panel/Authenticate");
         }
-      } finally {
-        setLoading(false);
       }
     });
-  }, [pathname]);
+  }, []);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
