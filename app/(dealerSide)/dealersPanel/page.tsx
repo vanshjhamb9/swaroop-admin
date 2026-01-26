@@ -120,7 +120,7 @@ function AdminPage() {
           Welcome to Dealer Panel
         </Typography>
         <Typography variant="body1" color="textSecondary">
-          Here's an overview of your dealer account
+          Here is an overview of your dealer account
         </Typography>
       </Box>
 
