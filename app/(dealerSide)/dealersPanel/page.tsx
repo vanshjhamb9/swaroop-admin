@@ -6,6 +6,9 @@ import { auth } from "@/firebase";
 import useOwnersStore from "@/store/dealersPanel/OwnersInfo";
 import { toast } from "react-toastify";
 
+
+// test
+
 function AdminPage() {
   const { info, setinfo } = useOwnersStore();
   const [localName, setLocalName] = useState<string>("");
@@ -332,7 +335,8 @@ function AdminPage() {
           </Paper>
         </Grid>
       </Grid>
-    </Box>
+    </Box>  
+    
   );
 }
 
