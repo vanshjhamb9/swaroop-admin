@@ -22,17 +22,76 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const authHeader = request.headers.get('authorization');
+    // Get authorization header - Next.js normalizes headers to lowercase
+    let authHeader = request.headers.get('authorization');
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // If not found, try all possible variations
+    if (!authHeader) {
+      authHeader = request.headers.get('Authorization') || 
+                   request.headers.get('AUTHORIZATION') ||
+                   request.headers.get('authorization');
+      
+      // Log all headers for debugging
+      const allHeaders: Record<string, string> = {};
+      request.headers.forEach((value, key) => {
+        allHeaders[key] = value;
+      });
+      console.error('No authorization header found. Available headers:', allHeaders);
+    }
+    
+    if (!authHeader) {
       return NextResponse.json(
-        { error: 'Missing or invalid authorization header' },
+        { 
+          error: 'Missing authorization header',
+          debug: 'Please ensure the Authorization header is set with Bearer token'
+        },
         { status: 401 }
       );
     }
 
-    const token = authHeader.split('Bearer ')[1];
-    const decodedToken = await adminAuth.verifyIdToken(token);
+    // Normalize the header value
+    const normalizedHeader = authHeader.trim();
+    
+    if (!normalizedHeader.toLowerCase().startsWith('bearer ')) {
+      console.error('Authorization header format issue. Received:', normalizedHeader.substring(0, 50) + '...');
+      return NextResponse.json(
+        { 
+          error: 'Invalid authorization header format',
+          details: 'Header must start with "Bearer " (case-insensitive)',
+          received: normalizedHeader.substring(0, 20) + '...'
+        },
+        { status: 401 }
+      );
+    }
+
+    // Extract token - handle both "Bearer token" and "bearer token"
+    const parts = normalizedHeader.split(/\s+/);
+    if (parts.length < 2) {
+      return NextResponse.json(
+        { error: 'Token missing in authorization header' },
+        { status: 401 }
+      );
+    }
+    
+    const token = parts.slice(1).join(' '); // Join in case token has spaces (shouldn't, but safe)
+
+    let decodedToken;
+    try {
+      decodedToken = await adminAuth.verifyIdToken(token);
+    } catch (tokenError: any) {
+      console.error('Token verification failed:', tokenError.message);
+      if (tokenError.code === 'auth/id-token-expired') {
+        return NextResponse.json(
+          { error: 'Token expired. Please login again to get a new token.' },
+          { status: 401 }
+        );
+      }
+      return NextResponse.json(
+        { error: 'Invalid token', details: tokenError.message },
+        { status: 401 }
+      );
+    }
+    
     const userId = decodedToken.uid;
 
     const body = await request.json();

@@ -1,0 +1,49 @@
+{
+  "info": {
+    "name": "PhonePe Payment Initiate",
+    "description": "Test PhonePe payment initiation API"
+  },
+  "item": [
+    {
+      "name": "Initiate PhonePe Payment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImY3NThlNTYzYzBiNjRhNzVmN2UzZGFlNDk0ZDM5NTk1YzE0MGVmOTMiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiUmFqZXNoIEt1bWFyIiwiaXNzIjoiaHR0cHM6Ly9zZWN1cmV0b2tlbi5nb29nbGUuY29tL3VwbGFpLTkwYzk2IiwiYXVkIjoidXBsYWktOTBjOTYiLCJhdXRoX3RpbWUiOjE3Njk4NzEyNDgsInVzZXJfaWQiOiJHcGVpM0dLWUpFaEdDOU9WQTkzOVdzMnhaMDMzIiwic3ViIjoiR3BlaTNHS1lKRWhHQzlPVkE5MzlXczJ4WjAzMyIsImlhdCI6MTc2OTg3MTI0OCwiZXhwIjoxNzY5ODc0ODQ4LCJlbWFpbCI6ImN1c3RvbWVyMUBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZW1haWwiOlsiY3VzdG9tZXIxQGdtYWlsLmNvbSJdfSwic2lnbl9pbl9wcm92aWRlciI6InBhc3N3b3JkIn19.ZnbDy1iDnVoTdWeGDKIxEYrheQ1ojUG4ArpPM8eFziPMkZnzVf0lkFDXu1EnpXT3LAwupALm3ob4jmwOIURXdA5yirv7XM8EoTrEAc2emX0pSMOhfCCmJPyTvMxfmK0GDZ4AB8-QT_oKUZ4v885g_07Zm5qhZPymdxSZ65Y4bGDODiwtVQzqMhT08ple6UxdV56O0L1qsqeJ8U_r-feQL-GnHsKRdMOd7aEBj_6G9LChxvHgDaCCLV_E2MLbBlX0ikGTmkE1_q5Xzwl3rajPjSYkgjPiXEM4o4vS_Y1R-RD7AgEO139AGfuZJYN5VRJQf4qyVSI6i4mQxZPFk9YaRQ",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 100\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://urbanuplink.ai/api/payment/phonepe/initiate",
+          "protocol": "https",
+          "host": [
+            "urbanuplink",
+            "ai"
+          ],
+          "path": [
+            "api",
+            "payment",
+            "phonepe",
+            "initiate"
+          ]
+        }
+      }
+    }
+  ]
+}
