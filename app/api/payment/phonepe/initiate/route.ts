@@ -22,35 +22,93 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:25',message:'Starting token extraction',data:{hasStandardAuth:!!request.headers.get('authorization'),hasVercelHeaders:!!request.headers.get('x-vercel-sc-headers')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C'})}).catch(()=>{});
+    // #endregion
+    
     // Get authorization header - Next.js normalizes headers to lowercase
     // Try standard header first (this is what Postman sends)
-    let authHeader = request.headers.get('authorization') || 
-                     request.headers.get('Authorization') || 
-                     request.headers.get('AUTHORIZATION');
+    const standardAuth = request.headers.get('authorization') || 
+                         request.headers.get('Authorization') || 
+                         request.headers.get('AUTHORIZATION');
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:32',message:'Standard auth header check',data:{found:!!standardAuth,length:standardAuth?.length||0,prefix:standardAuth?.substring(0,30)||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    
+    let authHeader = standardAuth;
     
     // If not found in standard headers, check Vercel's special header
     // BUT: Only use it if it looks like a Firebase token (starts with eyJ)
     // Vercel tokens don't have the 'kid' claim, so we need to filter them out
     if (!authHeader) {
       const vercelHeaders = request.headers.get('x-vercel-sc-headers');
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:40',message:'Checking Vercel headers',data:{hasVercelHeaders:!!vercelHeaders,length:vercelHeaders?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,D'})}).catch(()=>{});
+      // #endregion
+      
       if (vercelHeaders) {
         try {
           const parsedHeaders = JSON.parse(vercelHeaders);
           const extractedAuth = parsedHeaders.Authorization || parsedHeaders.authorization;
           
+          // #region agent log
+          fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:48',message:'Extracted from Vercel headers',data:{found:!!extractedAuth,startsWithBearer:extractedAuth?.startsWith('Bearer '),tokenPrefix:extractedAuth?.split(' ')[1]?.substring(0,20)||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,D'})}).catch(()=>{});
+          // #endregion
+          
           // Only use if it looks like a Firebase token (JWT tokens start with 'eyJ')
           // Vercel tokens might be different, so check the format
           if (extractedAuth && extractedAuth.startsWith('Bearer ')) {
             const potentialToken = extractedAuth.split(' ')[1];
+            const tokenParts = potentialToken?.split('.') || [];
+            const isJWTFormat = potentialToken && potentialToken.startsWith('eyJ') && tokenParts.length === 3;
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:56',message:'Token format validation',data:{isJWTFormat,partsCount:tokenParts.length,firstPartPrefix:tokenParts[0]?.substring(0,20)||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion
+            
             // Firebase ID tokens are JWTs that start with 'eyJ' and have 3 parts separated by '.'
-            if (potentialToken && potentialToken.startsWith('eyJ') && potentialToken.split('.').length === 3) {
-              authHeader = extractedAuth;
-              console.log('Extracted Authorization from x-vercel-sc-headers (Firebase token detected)');
+            if (isJWTFormat) {
+              // Decode JWT header to check for 'kid' claim
+              try {
+                const headerPart = tokenParts[0];
+                // JWT uses base64url encoding (URL-safe base64)
+                const base64 = headerPart.replace(/-/g, '+').replace(/_/g, '/');
+                const padding = '='.repeat((4 - base64.length % 4) % 4);
+                const decodedHeader = JSON.parse(Buffer.from(base64 + padding, 'base64').toString());
+                
+                // #region agent log
+                fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:66',message:'JWT header decoded',data:{hasKid:!!decodedHeader.kid,alg:decodedHeader.alg,typ:decodedHeader.typ},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion
+                
+                // Only use if it has 'kid' claim (Firebase tokens have this, Vercel tokens don't)
+                if (decodedHeader.kid) {
+                  authHeader = extractedAuth;
+                  
+                  // #region agent log
+                  fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:74',message:'Using token from Vercel headers (has kid)',data:{tokenLength:potentialToken.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                  // #endregion
+                } else {
+                  // #region agent log
+                  fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:79',message:'Rejecting token (no kid claim)',data:{reason:'No kid claim in JWT header'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                  // #endregion
+                }
+              } catch (decodeError: any) {
+                // #region agent log
+                fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:85',message:'Failed to decode JWT header',data:{error:decodeError.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                // #endregion
+              }
             } else {
-              console.warn('Token from x-vercel-sc-headers does not appear to be a Firebase token, skipping');
+              // #region agent log
+              fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:90',message:'Token does not match JWT format',data:{reason:'Not eyJ or wrong part count'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+              // #endregion
             }
           }
         } catch (e) {
+          // #region agent log
+          fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:96',message:'Failed to parse Vercel headers',data:{error:(e as Error).message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+          // #endregion
           console.error('Failed to parse x-vercel-sc-headers:', e);
         }
       }
@@ -101,10 +159,22 @@ export async function POST(request: NextRequest) {
     
     const token = parts.slice(1).join(' '); // Join in case token has spaces (shouldn't, but safe)
 
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:130',message:'Before token verification',data:{tokenLength:token.length,tokenPrefix:token.substring(0,30),partsCount:token.split('.').length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,C'})}).catch(()=>{});
+    // #endregion
+
     let decodedToken;
     try {
       decodedToken = await adminAuth.verifyIdToken(token);
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:137',message:'Token verification success',data:{userId:decodedToken.uid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
     } catch (tokenError: any) {
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:142',message:'Token verification failed',data:{error:tokenError.message,code:tokenError.code,hasKidError:tokenError.message.includes('kid')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      
       console.error('Token verification failed:', tokenError.message);
       if (tokenError.code === 'auth/id-token-expired') {
         return NextResponse.json(
