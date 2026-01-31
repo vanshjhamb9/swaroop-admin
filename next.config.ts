@@ -11,9 +11,6 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
-  // Enable SWC minification for faster builds
-  swcMinify: true,
-
   // Optimize production builds
   productionBrowserSourceMaps: false,
 
