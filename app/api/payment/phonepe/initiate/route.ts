@@ -32,11 +32,27 @@ export async function POST(request: NextRequest) {
                          request.headers.get('Authorization') || 
                          request.headers.get('AUTHORIZATION');
     
+    // Also check for custom header (workaround for Vercel stripping Authorization)
+    // Vercel strips the Authorization header, so we use X-Auth-Token as alternative
+    const customAuth = request.headers.get('x-auth-token') || 
+                       request.headers.get('X-Auth-Token') ||
+                       request.headers.get('X-AUTH-TOKEN');
+    
     // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:32',message:'Standard auth header check',data:{found:!!standardAuth,length:standardAuth?.length||0,prefix:standardAuth?.substring(0,30)||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:38',message:'Auth header check',data:{hasStandard:!!standardAuth,hasCustom:!!customAuth,customLength:customAuth?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
     // #endregion
     
+    // Use standard auth if found, otherwise use custom header (X-Auth-Token)
+    // If custom auth is provided, it should be the token without "Bearer " prefix
     let authHeader = standardAuth;
+    if (!authHeader && customAuth) {
+      // If custom auth already starts with "Bearer ", use as-is, otherwise add it
+      authHeader = customAuth.startsWith('Bearer ') ? customAuth : `Bearer ${customAuth}`;
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:47',message:'Using X-Auth-Token header',data:{tokenLength:customAuth.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+    }
     
     // If not found in standard headers, check Vercel's special header
     // BUT: Only use it if it looks like a Firebase token (starts with eyJ)
@@ -54,7 +70,12 @@ export async function POST(request: NextRequest) {
           const extractedAuth = parsedHeaders.Authorization || parsedHeaders.authorization;
           
           // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:48',message:'Extracted from Vercel headers',data:{found:!!extractedAuth,startsWithBearer:extractedAuth?.startsWith('Bearer '),tokenPrefix:extractedAuth?.split(' ')[1]?.substring(0,20)||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,D'})}).catch(()=>{});
+          fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:55',message:'Extracted from Vercel headers',data:{found:!!extractedAuth,startsWithBearer:extractedAuth?.startsWith('Bearer '),tokenPrefix:extractedAuth?.split(' ')[1]?.substring(0,50)||'none',fullTokenLength:extractedAuth?.split(' ')[1]?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,D'})}).catch(()=>{});
+          // #endregion
+          
+          // Log all keys in parsed headers to see what's available
+          // #region agent log
+          fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:60',message:'Vercel headers keys',data:{keys:Object.keys(parsedHeaders)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
           // #endregion
           
           // Only use if it looks like a Firebase token (JWT tokens start with 'eyJ')
@@ -118,16 +139,23 @@ export async function POST(request: NextRequest) {
       // Log all headers for debugging (truncate sensitive values)
       const allHeaders: Record<string, string> = {};
       request.headers.forEach((value, key) => {
-        if (key.toLowerCase().includes('auth') || key.toLowerCase().includes('vercel')) {
-          allHeaders[key] = value.length > 100 ? value.substring(0, 100) + '...' : value;
+        if (key.toLowerCase().includes('auth') || key.toLowerCase().includes('vercel') || key.toLowerCase().includes('forwarded')) {
+          allHeaders[key] = value.length > 200 ? value.substring(0, 200) + '...' : value;
         }
       });
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:130',message:'No auth header found - all relevant headers',data:allHeaders,timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B,D'})}).catch(()=>{});
+      // #endregion
+      
       console.error('No authorization header found. Relevant headers:', allHeaders);
       
       return NextResponse.json(
         { 
           error: 'Missing authorization header',
-          debug: 'Please ensure the Authorization header is set with Bearer token in Postman. The header should contain your Firebase ID token from the login response.'
+          debug: 'Vercel is stripping the Authorization header. The header you send is being replaced with a Vercel token.',
+          solution: 'Use header "X-Auth-Token" in Postman instead of "Authorization". Value: YOUR_FIREBASE_TOKEN (without "Bearer " prefix)',
+          alternative: 'Or configure Vercel to pass through Authorization headers in vercel.json'
         },
         { status: 401 }
       );
