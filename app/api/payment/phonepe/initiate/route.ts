@@ -25,18 +25,23 @@ export async function POST(request: NextRequest) {
     // Get authorization header - Next.js normalizes headers to lowercase
     let authHeader = request.headers.get('authorization');
     
-    // If not found, try all possible variations
+    // If not found, check Vercel's special header (x-vercel-sc-headers contains original headers as JSON)
+    if (!authHeader) {
+      const vercelHeaders = request.headers.get('x-vercel-sc-headers');
+      if (vercelHeaders) {
+        try {
+          const parsedHeaders = JSON.parse(vercelHeaders);
+          authHeader = parsedHeaders.Authorization || parsedHeaders.authorization;
+        } catch (e) {
+          console.error('Failed to parse x-vercel-sc-headers:', e);
+        }
+      }
+    }
+    
+    // If still not found, try all possible variations
     if (!authHeader) {
       authHeader = request.headers.get('Authorization') || 
-                   request.headers.get('AUTHORIZATION') ||
-                   request.headers.get('authorization');
-      
-      // Log all headers for debugging
-      const allHeaders: Record<string, string> = {};
-      request.headers.forEach((value, key) => {
-        allHeaders[key] = value;
-      });
-      console.error('No authorization header found. Available headers:', allHeaders);
+                   request.headers.get('AUTHORIZATION');
     }
     
     if (!authHeader) {
