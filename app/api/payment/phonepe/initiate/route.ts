@@ -10,6 +10,18 @@ const PHONEPE_API_URL = process.env.PHONEPE_API_URL || 'https://api-preprod.phon
 
 export async function POST(request: NextRequest) {
   try {
+    // Validate PhonePe configuration
+    if (!PHONEPE_MERCHANT_ID || !PHONEPE_SALT_KEY) {
+      console.error('PhonePe configuration missing:', {
+        hasMerchantId: !!PHONEPE_MERCHANT_ID,
+        hasSaltKey: !!PHONEPE_SALT_KEY
+      });
+      return NextResponse.json(
+        { error: 'PhonePe payment gateway is not configured. Please contact support.' },
+        { status: 500 }
+      );
+    }
+
     const authHeader = request.headers.get('authorization');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -28,10 +40,14 @@ export async function POST(request: NextRequest) {
 
     if (!amount || amount <= 0) {
       return NextResponse.json(
-        { error: 'Invalid amount' },
+        { error: 'Invalid amount. Amount must be greater than 0' },
         { status: 400 }
       );
     }
+
+    // Get base URL - use production URL if available, otherwise localhost
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
+                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://urbanuplink.ai');
 
     const merchantTransactionId = `TXN_${uuidv4()}`;
     const amountInPaise = Math.round(amount * 100);
@@ -41,9 +57,9 @@ export async function POST(request: NextRequest) {
       merchantTransactionId,
       merchantUserId: userId,
       amount: amountInPaise,
-      redirectUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000'}/payment/success`,
+      redirectUrl: `${baseUrl}/payment/success`,
       redirectMode: 'POST',
-      callbackUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000'}/api/payment/phonepe/webhook`,
+      callbackUrl: `${baseUrl}/api/payment/phonepe/webhook`,
       mobileNumber: decodedToken.phone_number || '',
       paymentInstrument: {
         type: 'PAY_PAGE'
@@ -80,9 +96,23 @@ export async function POST(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('PhonePe API error:', response.status, errorText);
+      let errorDetails;
+      try {
+        errorDetails = JSON.parse(errorText);
+      } catch {
+        errorDetails = errorText;
+      }
+      console.error('PhonePe API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorDetails
+      });
       return NextResponse.json(
-        { error: 'Failed to initiate payment', details: `PhonePe API returned ${response.status}` },
+        { 
+          error: 'Failed to initiate payment', 
+          details: errorDetails?.message || `PhonePe API returned ${response.status}: ${response.statusText}`,
+          statusCode: response.status
+        },
         { status: 500 }
       );
     }
@@ -99,9 +129,18 @@ export async function POST(request: NextRequest) {
         }
       });
     } else {
-      console.error('PhonePe response error:', responseData);
+      console.error('PhonePe response error:', {
+        success: responseData.success,
+        code: responseData.code,
+        message: responseData.message,
+        fullResponse: responseData
+      });
       return NextResponse.json(
-        { error: 'Failed to initiate payment', details: responseData.message || 'Invalid response from PhonePe' },
+        { 
+          error: 'Failed to initiate payment', 
+          details: responseData.message || responseData.code || 'Invalid response from PhonePe',
+          code: responseData.code
+        },
         { status: 400 }
       );
     }
