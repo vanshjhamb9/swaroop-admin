@@ -23,32 +23,53 @@ export async function POST(request: NextRequest) {
     }
 
     // Get authorization header - Next.js normalizes headers to lowercase
-    let authHeader = request.headers.get('authorization');
+    // Try standard header first (this is what Postman sends)
+    let authHeader = request.headers.get('authorization') || 
+                     request.headers.get('Authorization') || 
+                     request.headers.get('AUTHORIZATION');
     
-    // If not found, check Vercel's special header (x-vercel-sc-headers contains original headers as JSON)
+    // If not found in standard headers, check Vercel's special header
+    // BUT: Only use it if it looks like a Firebase token (starts with eyJ)
+    // Vercel tokens don't have the 'kid' claim, so we need to filter them out
     if (!authHeader) {
       const vercelHeaders = request.headers.get('x-vercel-sc-headers');
       if (vercelHeaders) {
         try {
           const parsedHeaders = JSON.parse(vercelHeaders);
-          authHeader = parsedHeaders.Authorization || parsedHeaders.authorization;
+          const extractedAuth = parsedHeaders.Authorization || parsedHeaders.authorization;
+          
+          // Only use if it looks like a Firebase token (JWT tokens start with 'eyJ')
+          // Vercel tokens might be different, so check the format
+          if (extractedAuth && extractedAuth.startsWith('Bearer ')) {
+            const potentialToken = extractedAuth.split(' ')[1];
+            // Firebase ID tokens are JWTs that start with 'eyJ' and have 3 parts separated by '.'
+            if (potentialToken && potentialToken.startsWith('eyJ') && potentialToken.split('.').length === 3) {
+              authHeader = extractedAuth;
+              console.log('Extracted Authorization from x-vercel-sc-headers (Firebase token detected)');
+            } else {
+              console.warn('Token from x-vercel-sc-headers does not appear to be a Firebase token, skipping');
+            }
+          }
         } catch (e) {
           console.error('Failed to parse x-vercel-sc-headers:', e);
         }
       }
     }
     
-    // If still not found, try all possible variations
     if (!authHeader) {
-      authHeader = request.headers.get('Authorization') || 
-                   request.headers.get('AUTHORIZATION');
-    }
-    
-    if (!authHeader) {
+      // Log all headers for debugging (truncate sensitive values)
+      const allHeaders: Record<string, string> = {};
+      request.headers.forEach((value, key) => {
+        if (key.toLowerCase().includes('auth') || key.toLowerCase().includes('vercel')) {
+          allHeaders[key] = value.length > 100 ? value.substring(0, 100) + '...' : value;
+        }
+      });
+      console.error('No authorization header found. Relevant headers:', allHeaders);
+      
       return NextResponse.json(
         { 
           error: 'Missing authorization header',
-          debug: 'Please ensure the Authorization header is set with Bearer token'
+          debug: 'Please ensure the Authorization header is set with Bearer token in Postman. The header should contain your Firebase ID token from the login response.'
         },
         { status: 401 }
       );
