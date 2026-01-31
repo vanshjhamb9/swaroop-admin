@@ -21,7 +21,7 @@ function AdminPage() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const idToken = await user.getIdToken();
+        const idToken = await user.getIdToken();  
         setToken(idToken);
         await Promise.all([
           fetchDealerInfo(idToken),
