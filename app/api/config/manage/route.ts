@@ -132,13 +132,6 @@ export async function PUT(request: NextRequest) {
           credits: 50,
           description: 'Video processing',
         },
-        video: body.creditRates.video ? {
-          credits: Number(body.creditRates.video.credits),
-          description: body.creditRates.video.description || 'Video processing',
-        } : {
-          credits: 50,
-          description: 'Video processing',
-        },
       },
       features: {
         singleImageEnabled: body.features.singleImageEnabled !== false,

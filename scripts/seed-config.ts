@@ -11,8 +11,8 @@ const defaultConfig: AppConfig = {
   timestamp: new Date().toISOString(),
   appUpdate: {
     isUpdateRequired: false,
-    minimumVersion: '1.0.0',
-    latestVersion: '1.0.0',
+    minimumVersion: '1.0.4',
+    latestVersion: '1.0.4',
     forceUpdate: false,
     updateMessage: 'New features available! Update now.',
   },

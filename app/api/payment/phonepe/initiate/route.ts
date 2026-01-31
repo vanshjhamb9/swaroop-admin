@@ -78,9 +78,18 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({ request: base64Payload })
     });
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('PhonePe API error:', response.status, errorText);
+      return NextResponse.json(
+        { error: 'Failed to initiate payment', details: `PhonePe API returned ${response.status}` },
+        { status: 500 }
+      );
+    }
+
     const responseData = await response.json();
 
-    if (responseData.success) {
+    if (responseData.success && responseData.data?.instrumentResponse?.redirectInfo?.url) {
       return NextResponse.json({
         success: true,
         data: {
@@ -90,8 +99,9 @@ export async function POST(request: NextRequest) {
         }
       });
     } else {
+      console.error('PhonePe response error:', responseData);
       return NextResponse.json(
-        { error: 'Failed to initiate payment', details: responseData },
+        { error: 'Failed to initiate payment', details: responseData.message || 'Invalid response from PhonePe' },
         { status: 400 }
       );
     }
