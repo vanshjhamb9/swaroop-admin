@@ -53,7 +53,7 @@ The database has been seeded with test data for all user types. Use these creden
 
 3. **Amit Patel**
    - Email: customer3@gmail.com
-   - Password: Customer123
+   - Password:    
    - Plan: Postpaid
    - Balance: ₹8,000
 

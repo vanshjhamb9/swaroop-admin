@@ -1,0 +1,241 @@
+{
+  "info": {
+    "name": "PhonePe Payment API",
+    "description": "Collection for testing PhonePe payment initiation API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "🔐 Login - Get Fresh Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.success && jsonData.data.idToken) {",
+              "        pm.environment.set(\"firebase_token\", jsonData.data.idToken);",
+              "        console.log(\"✅ Token saved to environment! Expires in 1 hour.\");",
+              "        console.log(\"User:\", jsonData.data.user.email);",
+              "    } else {",
+              "        console.log(\"❌ Token not found in response\");",
+              "    }",
+              "} else {",
+              "    console.log(\"❌ Login failed:\", pm.response.text());",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"customer1@gmail.com\",\n  \"password\": \"Customer123\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "login"]
+        },
+        "description": "Login to get a fresh Firebase token. The token will be automatically saved to 'firebase_token' environment variable. Run this request first if your token expired. Update email/password in body if needed."
+      },
+      "response": []
+    },
+    {
+      "name": "Initiate Payment - Success",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "X-Auth-Token",
+            "value": "{{firebase_token}}",
+            "type": "text",
+            "description": "Firebase ID token (without 'Bearer ' prefix)"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 100\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/payment/phonepe/initiate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "payment", "phonepe", "initiate"]
+        },
+        "description": "Initiates a PhonePe payment transaction. Returns a payment URL that can be opened in a browser to complete the payment."
+      },
+      "response": []
+    },
+    {
+      "name": "Initiate Payment - Minimum Amount",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Auth-Token",
+            "value": "{{firebase_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/payment/phonepe/initiate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "payment", "phonepe", "initiate"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Initiate Payment - Large Amount",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Auth-Token",
+            "value": "{{firebase_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 10000\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/payment/phonepe/initiate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "payment", "phonepe", "initiate"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Initiate Payment - Invalid Amount (Zero)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Auth-Token",
+            "value": "{{firebase_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 0\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/payment/phonepe/initiate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "payment", "phonepe", "initiate"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Initiate Payment - Missing Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 100\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/payment/phonepe/initiate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "payment", "phonepe", "initiate"]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string",
+      "description": "Base URL for API requests. Default port is 5000."
+    },
+    {
+      "key": "firebase_token",
+      "value": "YOUR_FIREBASE_TOKEN_HERE",
+      "type": "string",
+      "description": "Firebase ID token. Run 'Login - Get Fresh Token' request to auto-populate this."
+    },
+    {
+      "key": "test_email",
+      "value": "customer1@gmail.com",
+      "type": "string",
+      "description": "Test user email for login"
+    },
+    {
+      "key": "test_password",
+      "value": "Customer123",
+      "type": "string",
+      "description": "Test user password for login"
+    }
+  ]
+}

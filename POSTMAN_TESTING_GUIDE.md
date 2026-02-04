@@ -1,316 +1,380 @@
-# Postman Testing Guide - PhonePe Payment API
+# PhonePe API - Postman Testing Guide
 
-## Prerequisites
+## 📋 Prerequisites
 
-You need a Firebase authentication token (idToken) to test this API. Follow these steps:
+1. **Firebase Authentication Token**: You need a valid Firebase ID token to authenticate requests
+2. **Postman Installed**: Download from [postman.com](https://www.postman.com/downloads/)
+3. **Next.js Server Running**: Make sure your dev server is running (`npm run dev`)
 
----
+## 🔧 Step-by-Step Postman Setup
 
-## Step 1: Get Authentication Token
+### Step 1: Get Your Firebase Token
 
-### Request 1: Login to Get Token
+**📖 For detailed instructions, see: `HOW_TO_GET_FIREBASE_TOKEN.md`**
 
-**Method:** `POST`  
-**URL:** `https://urbanuplink.ai/api/auth/login`
+**Quick Method (Easiest):**
+1. Use Postman to call your login API:
+   - **POST** `http://localhost:3000/api/auth/login`
+   - **Body**: `{"email": "your-email@example.com", "password": "your-password"}`
+2. Copy the `idToken` from the response
+3. Use it as your `firebase_token` environment variable
 
-**Headers:**
-```
-Content-Type: application/json
-```
+**Alternative Methods:**
+- Use the helper script: `node get-firebase-token.js your-email@example.com your-password`
+- Get it from Firebase Console (see detailed guide)
+- Extract from browser console if you have a frontend app
 
-**Body (raw JSON):**
-```json
-{
-  "email": "your-email@example.com",
-  "password": "your-password"
-}
-```
+**⚠️ IMPORTANT**: Firebase tokens expire after 1 hour. If you get "Token expired" error, get a fresh token:
 
-**Expected Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "idToken": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "customToken": "...",
-    "refreshToken": "...",
-    "user": {
-      "uid": "user123",
-      "email": "your-email@example.com",
-      "name": "Your Name",
-      "role": "customer",
-      "planType": "prepaid",
-      "creditBalance": 0
-    }
-  }
-}
-```
+**Quick Refresh:**
+1. Run: `node get-firebase-token.js your-email@example.com your-password`
+2. Copy the new token
+3. Update `firebase_token` in Postman environment
+4. Or use the Login request in Postman (see "Auto-Refresh Setup" below)
 
-**Copy the `idToken` from the response** - you'll need it for the next request.
+### Step 2: Configure Environment Variables in Postman
 
----
+1. Open Postman
+2. Click on **Environments** (left sidebar)
+3. Click **+** to create a new environment
+4. Add these variables:
 
-## Step 2: Test PhonePe Payment Initiate API
+| Variable | Initial Value | Current Value |
+|----------|---------------|---------------|
+| `base_url` | `http://localhost:3000` | `http://localhost:3000` |
+| `firebase_token` | `YOUR_FIREBASE_TOKEN_HERE` | `YOUR_FIREBASE_TOKEN_HERE` |
+| `amount` | `100` | `100` |
 
-### Request 2: Initiate PhonePe Payment
+5. Save the environment
+6. Select this environment from the dropdown (top right)
 
-**Method:** `POST`  
-**URL:** `https://urbanuplink.ai/api/payment/phonepe/initiate`
+### Step 3: Create a New Request
 
-**Headers:**
-```
-Authorization: Bearer YOUR_ID_TOKEN_HERE
-Content-Type: application/json
-```
+1. Click **New** → **HTTP Request**
+2. Set the request method to **POST**
+3. Enter the URL: `{{base_url}}/api/payment/phonepe/initiate`
 
-**Body (raw JSON):**
+### Step 4: Configure Headers
+
+Add the following headers:
+
+| Key | Value |
+|-----|-------|
+| `Content-Type` | `application/json` |
+| `X-Auth-Token` | `{{firebase_token}}` |
+
+**Important**: Use `X-Auth-Token` header instead of `Authorization` header because:
+- Vercel strips the `Authorization` header in production
+- The API accepts `X-Auth-Token` as an alternative
+- The value should be your Firebase token **without** the "Bearer " prefix
+
+**Alternative**: If testing locally and not on Vercel, you can also use:
+- `Authorization` header with value: `Bearer {{firebase_token}}`
+
+### Step 5: Configure Request Body
+
+1. Select **Body** tab
+2. Select **raw**
+3. Select **JSON** from the dropdown
+4. Enter the following JSON:
+
 ```json
 {
   "amount": 100
 }
 ```
 
-**Note:** Amount is in INR (Rupees). For example:
-- `100` = ₹100
-- `500` = ₹500
-- `1000` = ₹1000
-
----
-
-## Complete Postman Setup
-
-### Collection Structure:
-
-```
-📁 PhonePe Payment API Tests
-  ├── 🔐 Step 1: Login
-  └── 💳 Step 2: Initiate Payment
-```
-
----
-
-## Detailed Postman Configuration
-
-### Request 1: Login
-
-**Tab: Authorization**
-- Type: `No Auth`
-
-**Tab: Headers**
-| Key | Value |
-|-----|-------|
-| Content-Type | application/json |
-
-**Tab: Body**
-- Select: `raw`
-- Format: `JSON`
-- Content:
+Or use the environment variable:
 ```json
 {
-  "email": "customer1@gmail.com",
-  "password": "Customer123"
+  "amount": {{amount}}
 }
 ```
 
-**Tab: Tests** (Optional - to auto-save token)
-```javascript
-if (pm.response.code === 200) {
-    const jsonData = pm.response.json();
-    if (jsonData.success && jsonData.data.idToken) {
-        pm.environment.set("idToken", jsonData.data.idToken);
-        console.log("Token saved to environment variable");
-    }
-}
-```
+**Note**: 
+- Amount is in **rupees** (not paise)
+- Minimum amount: 1 rupee
+- The API will convert it to paise automatically
 
----
+### Step 6: Send the Request
 
-### Request 2: Initiate PhonePe Payment
+1. Click **Send**
+2. Check the response
 
-**Tab: Authorization**
-- Type: `Bearer Token`
-- Token: `{{idToken}}` (if using environment variable)
-- OR manually paste the token from Step 1
+## 📤 Expected Response
 
-**Tab: Headers**
-| Key | Value |
-|-----|-------|
-| Content-Type | application/json |
-| Authorization | Bearer YOUR_ID_TOKEN_HERE |
+### Success Response (200 OK)
 
-**Tab: Body**
-- Select: `raw`
-- Format: `JSON`
-- Content:
-```json
-{
-  "amount": 100
-}
-```
-
----
-
-## Expected Responses
-
-### Success Response (200 OK):
 ```json
 {
   "success": true,
   "data": {
     "paymentUrl": "https://mercury-uat.phonepe.com/transact/...",
-    "merchantTransactionId": "TXN_abc123-def456-...",
+    "merchantTransactionId": "TXN_12345678-1234-1234-1234-123456789012",
     "amount": 100
   }
 }
 ```
 
-### Error Responses:
+**What to do next:**
+- Copy the `paymentUrl` from the response
+- Open it in a browser to complete the payment
+- Use PhonePe test credentials to complete the payment
 
-**401 Unauthorized:**
+### Error Responses
+
+#### 401 Unauthorized - Missing Token
 ```json
 {
-  "error": "Missing or invalid authorization header"
+  "error": "Missing authorization header",
+  "debug": "Vercel is stripping the Authorization header...",
+  "solution": "Use header \"X-Auth-Token\" in Postman instead of \"Authorization\"..."
 }
 ```
-**Solution:** Check if Authorization header is set correctly with Bearer token.
+**Solution**: Make sure you've added the `X-Auth-Token` header with your Firebase token
 
-**400 Bad Request:**
+#### 401 Unauthorized - Invalid Token
+```json
+{
+  "error": "Invalid token",
+  "details": "Token expired. Please login again to get a new token."
+}
+```
+**Solution**: Get a fresh Firebase token (tokens expire after 1 hour)
+
+#### 400 Bad Request - Invalid Amount
 ```json
 {
   "error": "Invalid amount. Amount must be greater than 0"
 }
 ```
-**Solution:** Ensure amount is a positive number.
+**Solution**: Make sure the amount in the request body is a positive number
 
-**500 Internal Server Error:**
+#### 500 Internal Server Error - Configuration Missing
 ```json
 {
   "error": "PhonePe payment gateway is not configured. Please contact support."
 }
 ```
-**Solution:** PhonePe environment variables are missing. Check server configuration.
+**Solution**: Check your `.env.local` file has the PhonePe credentials
 
-**500 Internal Server Error (PhonePe API):**
+## 🧪 Testing Different Scenarios
+
+### Test Case 1: Successful Payment Initiation
+- **Amount**: 100
+- **Expected**: 200 OK with payment URL
+
+### Test Case 2: Minimum Amount
+- **Amount**: 1
+- **Expected**: 200 OK with payment URL
+
+### Test Case 3: Large Amount
+- **Amount**: 10000
+- **Expected**: 200 OK with payment URL
+
+### Test Case 4: Invalid Amount (Zero)
+- **Amount**: 0
+- **Expected**: 400 Bad Request
+
+### Test Case 5: Invalid Amount (Negative)
+- **Amount**: -10
+- **Expected**: 400 Bad Request
+
+### Test Case 6: Missing Amount
+- **Body**: `{}`
+- **Expected**: 400 Bad Request
+
+### Test Case 7: Missing Token
+- **Headers**: Remove `X-Auth-Token`
+- **Expected**: 401 Unauthorized
+
+### Test Case 8: Invalid Token
+- **X-Auth-Token**: `invalid_token_12345`
+- **Expected**: 401 Unauthorized
+
+## 🔐 PhonePe Test Credentials
+
+When you open the payment URL in browser, use these test credentials:
+
+**For SANDBOX/Test Mode:**
+- Use any test phone number (e.g., 9999999999)
+- Use any test UPI ID (e.g., test@ybl)
+- Use any test card number (e.g., 4111111111111111)
+- Use any future expiry date (e.g., 12/25)
+- Use any CVV (e.g., 123)
+
+**Note**: PhonePe sandbox environment allows any test credentials.
+
+## 📝 Postman Collection JSON
+
+You can import this collection directly into Postman:
+
 ```json
 {
-  "error": "Failed to initiate payment",
-  "details": "PhonePe API returned 400: Bad Request",
-  "statusCode": 400
+  "info": {
+    "name": "PhonePe Payment API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Initiate Payment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Auth-Token",
+            "value": "{{firebase_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 100\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/payment/phonepe/initiate",
+          "host": ["{{base_url}}"],
+          "path": ["api", "payment", "phonepe", "initiate"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "firebase_token",
+      "value": "YOUR_FIREBASE_TOKEN_HERE"
+    }
+  ]
 }
 ```
-**Solution:** Check PhonePe credentials or API endpoint configuration.
 
----
+## 🚀 Quick Start Checklist
 
-## Quick Test Script (cURL)
+- [ ] Firebase token obtained and added to Postman environment
+- [ ] Next.js dev server running (`npm run dev`)
+- [ ] Postman environment created with `base_url` and `firebase_token`
+- [ ] Request configured with POST method
+- [ ] URL set to `{{base_url}}/api/payment/phonepe/initiate`
+- [ ] Headers added: `Content-Type` and `X-Auth-Token`
+- [ ] Body set to JSON with `amount` field
+- [ ] Environment selected in Postman
+- [ ] Request sent successfully
 
-### Step 1: Login
+## 🔄 Handling Token Expiration (Auto-Refresh Setup)
+
+Firebase tokens expire after 1 hour. Here's how to set up automatic token refresh in Postman:
+
+### Option 1: Auto-Save Token from Login Request (Recommended)
+
+1. **Create a Login Request** in your Postman collection:
+   - **Name**: "Login - Get Token"
+   - **Method**: POST
+   - **URL**: `{{base_url}}/api/auth/login`
+   - **Body** (JSON):
+     ```json
+     {
+       "email": "customer1@gmail.com",
+       "password": "Customer123"
+     }
+     ```
+
+2. **Add Test Script** to automatically save the token:
+   - Go to **Tests** tab in the Login request
+   - Add this code:
+     ```javascript
+     if (pm.response.code === 200) {
+         const jsonData = pm.response.json();
+         if (jsonData.success && jsonData.data.idToken) {
+             pm.environment.set("firebase_token", jsonData.data.idToken);
+             console.log("✅ Token saved! Expires in 1 hour.");
+         }
+     }
+     ```
+
+3. **Before testing PhonePe API**:
+   - Run the "Login - Get Token" request first
+   - The token will be automatically saved to your environment
+   - Then run your PhonePe API request
+
+### Option 2: Use Helper Script
+
+Run this command whenever your token expires:
 ```bash
-curl -X POST https://urbanuplink.ai/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "customer1@gmail.com",
-    "password": "Customer123"
-  }'
+node get-firebase-token.js customer1@gmail.com Customer123
 ```
 
-### Step 2: Initiate Payment (Replace YOUR_TOKEN with token from Step 1)
-```bash
-curl -X POST https://urbanuplink.ai/api/payment/phonepe/initiate \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
-  -d '{
-    "amount": 100
-  }'
+Copy the token and update it in Postman environment manually.
+
+### Option 3: Pre-request Script (Advanced)
+
+Add this to your PhonePe API request's **Pre-request Script** tab to auto-refresh if expired:
+
+```javascript
+// Check if token exists and is not too old (optional)
+// For now, just run login request manually before PhonePe request
+// This is a placeholder for future auto-refresh logic
 ```
 
----
+**Note**: For now, manually refresh tokens using Option 1 or 2.
 
-## Common Issues & Solutions
+## 🐛 Troubleshooting
 
-### Issue 1: "Missing or invalid authorization header"
-**Cause:** Authorization header not set or incorrect format.
+### Issue: "Missing authorization header"
+- **Solution**: Make sure you're using `X-Auth-Token` header (not `Authorization`)
 
-**Solution:**
-- Ensure header is: `Authorization: Bearer YOUR_TOKEN`
-- No spaces before "Bearer"
-- Token should be the `idToken` from login response
+### Issue: "Token expired" or "Invalid token"
+- **Error Message**: `Firebase ID token has expired. Get a fresh ID token from your client app`
+- **Cause**: Firebase tokens expire after 1 hour for security reasons
+- **Solution**: 
+  1. **Quick Fix**: Run `node get-firebase-token.js your-email@example.com your-password`
+  2. Copy the new token from the output
+  3. Update `firebase_token` in your Postman environment
+  4. Or use the Login request in Postman (see "Auto-Refresh Setup" below)
 
-### Issue 2: "Token expired or invalid"
-**Cause:** Firebase token has expired (tokens expire after 1 hour).
+### Issue: "Connection refused"
+- **Solution**: Make sure your Next.js dev server is running on the correct port
 
-**Solution:**
-- Login again to get a new token
-- Use the new `idToken` in the Authorization header
+### Issue: "PhonePe payment gateway is not configured"
+- **Solution**: Check your `.env.local` file has:
+  ```
+  PHONEPE_CLIENT_ID=M2303MNTS7JUM_2602011428
+  PHONEPE_CLIENT_SECRET=ZGUzYzAxMjgtZjA4Zi00Y2E0LTkwMjItZTkzMTc2ZWNjN2Rj
+  PHONEPE_CLIENT_VERSION=1
+  ```
 
-### Issue 3: "PhonePe payment gateway is not configured"
-**Cause:** Server environment variables are missing.
+### Issue: Payment URL not working
+- **Solution**: Make sure you're using SANDBOX credentials and test the payment URL in a browser
 
-**Solution:**
-- Check if these are set on the server:
-  - `PHONEPE_MERCHANT_ID`
-  - `PHONEPE_SALT_KEY`
-  - `PHONEPE_SALT_INDEX`
-  - `PHONEPE_API_URL`
+## ⚠️ Common Error: Token Expired
 
-### Issue 4: "Invalid amount"
-**Cause:** Amount is 0, negative, or not a number.
+**If you see this error:**
+```
+Token verification failed: Firebase ID token has expired. Get a fresh ID token from your client app
+```
 
-**Solution:**
-- Use positive numbers only
-- Example: `100`, `500`, `1000`
+**Quick Fix:**
+1. Run: `node get-firebase-token.js customer1@gmail.com Customer123`
+2. Copy the new token
+3. In Postman: Environments → Edit → Update `firebase_token` → Save
+4. Try your request again
 
----
+**Test Credentials** (from TEST_CREDENTIALS.md):
+- Customer: `customer1@gmail.com` / `Customer123`
+- Admin: `admin1@car360.com` / `Admin123`
+- Dealer: `dealer1@car360.com` / `Dealer123`
 
-## Postman Environment Variables (Recommended)
+## 📞 Support
 
-Create a Postman Environment with:
-
-| Variable | Initial Value | Current Value |
-|----------|--------------|---------------|
-| `baseUrl` | `https://urbanuplink.ai` | `https://urbanuplink.ai` |
-| `idToken` | (empty) | (auto-filled after login) |
-| `email` | `customer1@gmail.com` | `customer1@gmail.com` |
-| `password` | `Customer123` | `Customer123` |
-
-Then use in requests:
-- URL: `{{baseUrl}}/api/payment/phonepe/initiate`
-- Authorization: `Bearer {{idToken}}`
-
----
-
-## Testing Checklist
-
-- [ ] Step 1: Login successful, received idToken
-- [ ] Step 2: Authorization header set correctly
-- [ ] Step 2: Amount is a positive number
-- [ ] Step 2: Received paymentUrl in response
-- [ ] Payment URL opens correctly in browser
-- [ ] Payment can be completed in PhonePe sandbox
-
----
-
-## Test Data
-
-**Test User Credentials (if available):**
-- Email: `customer1@gmail.com`
-- Password: `Customer123`
-
-**Test Amounts:**
-- Minimum: `1` (₹1)
-- Recommended: `100` (₹100)
-- Maximum: No limit (but PhonePe may have limits)
-
----
-
-## Notes
-
-1. **Sandbox Mode:** The API uses PhonePe sandbox for testing
-2. **Token Expiry:** Firebase tokens expire after 1 hour - login again if needed
-3. **Amount:** Amount is in INR (Indian Rupees)
-4. **Payment URL:** The response contains a `paymentUrl` that should be opened in a browser/webview
-5. **Webhook:** After payment, PhonePe will call the webhook automatically to add credits
-
----
-
-**Last Updated:** 2025-01-27
+If you encounter issues:
+1. **Token expired**: Get a fresh token using the helper script
+2. Check the server logs for detailed error messages
+3. Verify all environment variables are set correctly
+4. Ensure Firebase token is valid and not expired (tokens expire after 1 hour)
+5. Check PhonePe dashboard for API status
