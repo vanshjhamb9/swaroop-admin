@@ -1,20 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminFirestore } from '../../../firebaseadmin';
-import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
+import { StandardCheckoutClient, StandardCheckoutPayRequest, Env } from 'pg-sdk-node';
 
-const PHONEPE_MERCHANT_ID = process.env.PHONEPE_MERCHANT_ID || '';
-const PHONEPE_SALT_KEY = process.env.PHONEPE_SALT_KEY || '';
-const PHONEPE_SALT_INDEX = process.env.PHONEPE_SALT_INDEX || '1';
-const PHONEPE_API_URL = process.env.PHONEPE_API_URL || 'https://api-preprod.phonepe.com/apis/pg-sandbox';
+// PhonePe Credentials - Support both test and production
+const PHONEPE_CLIENT_ID = process.env.PHONEPE_CLIENT_ID || process.env.PHONEPE_MERCHANT_ID || 'M2303MNTS7JUM';
+const PHONEPE_CLIENT_SECRET = process.env.PHONEPE_CLIENT_SECRET || process.env.PHONEPE_SALT_KEY || 'c78d7749-d9f7-4f29-b165-f09ead02e7ae';
+const PHONEPE_CLIENT_VERSION = parseInt(process.env.PHONEPE_CLIENT_VERSION || process.env.PHONEPE_SALT_INDEX || '1');
+// Use SANDBOX for test, PRODUCTION for production (default to SANDBOX if not specified)
+const PHONEPE_ENV = process.env.PHONEPE_ENV === 'PRODUCTION' ? Env.PRODUCTION : Env.SANDBOX;
 
 export async function POST(request: NextRequest) {
   try {
     // Validate PhonePe configuration
-    if (!PHONEPE_MERCHANT_ID || !PHONEPE_SALT_KEY) {
+    if (!PHONEPE_CLIENT_ID || !PHONEPE_CLIENT_SECRET) {
       console.error('PhonePe configuration missing:', {
-        hasMerchantId: !!PHONEPE_MERCHANT_ID,
-        hasSaltKey: !!PHONEPE_SALT_KEY
+        hasClientId: !!PHONEPE_CLIENT_ID,
+        hasClientSecret: !!PHONEPE_CLIENT_SECRET
       });
       return NextResponse.json(
         { error: 'PhonePe payment gateway is not configured. Please contact support.' },
@@ -235,26 +237,55 @@ export async function POST(request: NextRequest) {
     const merchantTransactionId = `TXN_${uuidv4()}`;
     const amountInPaise = Math.round(amount * 100);
 
-    const paymentPayload = {
-      merchantId: PHONEPE_MERCHANT_ID,
+    // Initialize PhonePe SDK client using getInstance (singleton pattern)
+    const phonePeClient = StandardCheckoutClient.getInstance(
+      PHONEPE_CLIENT_ID,
+      PHONEPE_CLIENT_SECRET,
+      PHONEPE_CLIENT_VERSION,
+      PHONEPE_ENV,
+      false // shouldPublishEvents - set to false
+    );
+
+    // Create payment request using SDK
+    // Ensure redirect URL is a publicly accessible URL (not localhost)
+    const redirectUrl = `${baseUrl}/payment/success`;
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:250',message:'Building payment request',data:{merchantTransactionId,amountInPaise,redirectUrl,baseUrl,environment:PHONEPE_ENV===Env.PRODUCTION?'production':'sandbox'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
+    
+    // Log the redirect URL for debugging
+    console.log('PhonePe Payment Request:', {
       merchantTransactionId,
-      merchantUserId: userId,
       amount: amountInPaise,
-      redirectUrl: `${baseUrl}/payment/success`,
-      redirectMode: 'POST',
-      callbackUrl: `${baseUrl}/api/payment/phonepe/webhook`,
-      mobileNumber: decodedToken.phone_number || '',
-      paymentInstrument: {
-        type: 'PAY_PAGE'
-      }
-    };
+      redirectUrl,
+      baseUrl,
+      environment: PHONEPE_ENV === Env.PRODUCTION ? 'production' : 'sandbox'
+    });
+    
+    const payRequest = new StandardCheckoutPayRequest(
+      merchantTransactionId,
+      amountInPaise,
+      undefined, // metaInfo
+      undefined, // message
+      redirectUrl // redirectUrl - must be publicly accessible
+    );
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:268',message:'Payment request created',data:{merchantOrderId:payRequest.merchantOrderId,amount:payRequest.amount,hasPaymentFlow:!!payRequest.paymentFlow,paymentFlowType:payRequest.paymentFlow?.type,merchantUrlsRedirectUrl:payRequest.paymentFlow?.merchantUrls?.redirectUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
+    
+    // Verify the request structure
+    console.log('Payment Request Structure:', {
+      merchantOrderId: payRequest.merchantOrderId,
+      amount: payRequest.amount,
+      paymentFlow: payRequest.paymentFlow ? {
+        type: payRequest.paymentFlow.type,
+        merchantUrls: payRequest.paymentFlow.merchantUrls
+      } : 'missing'
+    });
 
-    const base64Payload = Buffer.from(JSON.stringify(paymentPayload)).toString('base64');
-    const checksum = crypto
-      .createHash('sha256')
-      .update(base64Payload + '/pg/v1/pay' + PHONEPE_SALT_KEY)
-      .digest('hex') + '###' + PHONEPE_SALT_INDEX;
-
+    // Save payment record to Firestore
     const paymentDoc = {
       id: merchantTransactionId,
       userId,
@@ -263,72 +294,55 @@ export async function POST(request: NextRequest) {
       paymentMethod: 'phonepe',
       phonePeMerchantTransactionId: merchantTransactionId,
       timestamp: new Date().toISOString(),
-      payload: paymentPayload
+      environment: PHONEPE_ENV === Env.PRODUCTION ? 'production' : 'sandbox'
     };
 
     await adminFirestore.collection('payments').doc(merchantTransactionId).set(paymentDoc);
 
-    const response = await fetch(`${PHONEPE_API_URL}/pg/v1/pay`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-VERIFY': checksum
-      },
-      body: JSON.stringify({ request: base64Payload })
-    });
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:292',message:'Calling PhonePe SDK pay()',data:{merchantTransactionId,amountInPaise,redirectUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      let errorDetails;
-      try {
-        errorDetails = JSON.parse(errorText);
-      } catch {
-        errorDetails = errorText;
-      }
-      console.error('PhonePe API error:', {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorDetails
-      });
-      return NextResponse.json(
-        { 
-          error: 'Failed to initiate payment', 
-          details: errorDetails?.message || `PhonePe API returned ${response.status}: ${response.statusText}`,
-          statusCode: response.status
-        },
-        { status: 500 }
-      );
-    }
+    // Initiate payment using SDK
+    const payResponse = await phonePeClient.pay(payRequest);
 
-    const responseData = await response.json();
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:297',message:'PhonePe SDK response received',data:{hasResponse:!!payResponse,hasRedirectUrl:!!payResponse?.redirectUrl,redirectUrl:payResponse?.redirectUrl,responseKeys:payResponse?Object.keys(payResponse):[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
 
-    if (responseData.success && responseData.data?.instrumentResponse?.redirectInfo?.url) {
+    // SDK returns StandardCheckoutPayResponse with redirectUrl
+    if (payResponse && payResponse.redirectUrl) {
       return NextResponse.json({
         success: true,
         data: {
-          paymentUrl: responseData.data.instrumentResponse.redirectInfo.url,
+          paymentUrl: payResponse.redirectUrl,
           merchantTransactionId,
           amount
         }
       });
     } else {
-      console.error('PhonePe response error:', {
-        success: responseData.success,
-        code: responseData.code,
-        message: responseData.message,
-        fullResponse: responseData
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:310',message:'PhonePe SDK response missing redirectUrl',data:{response:payResponse,responseType:typeof payResponse,responseString:JSON.stringify(payResponse)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+      // #endregion
+      
+      console.error('PhonePe SDK response error:', {
+        response: payResponse
       });
       return NextResponse.json(
         { 
           error: 'Failed to initiate payment', 
-          details: responseData.message || responseData.code || 'Invalid response from PhonePe',
-          code: responseData.code
+          details: 'Invalid response from PhonePe SDK - redirectUrl missing',
+          response: payResponse
         },
         { status: 400 }
       );
     }
     
   } catch (error: any) {
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:325',message:'Exception in payment initiation',data:{error:error.message,stack:error.stack,errorType:error.constructor.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
+    
     console.error('Error initiating PhonePe payment:', error);
     return NextResponse.json(
       { error: 'Failed to initiate payment', details: error.message },
