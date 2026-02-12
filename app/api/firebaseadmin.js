@@ -39,7 +39,8 @@ function initializeFirebaseAdmin() {
     app = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-      databaseURL: `https://${process.env.FIREBASE_ADMIN_PROJECT_ID}.firebaseio.com`
+      databaseURL: `https://${process.env.FIREBASE_ADMIN_PROJECT_ID}.firebaseio.com`,
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || `${process.env.FIREBASE_ADMIN_PROJECT_ID}.appspot.com`
     });
 
     // Get Firestore instance with optimized settings
@@ -59,10 +60,10 @@ function initializeFirebaseAdmin() {
     throw error;
   }
 
-  return { app, db, auth };
+  return { app, db, auth, storage: admin.storage() };
 }
 
 // Initialize once
-const { app: adminApp, db: adminFirestore, auth: adminAuth } = initializeFirebaseAdmin();
+const { app: adminApp, db: adminFirestore, auth: adminAuth, storage: adminStorage } = initializeFirebaseAdmin();
 
-export { adminApp, adminFirestore, adminAuth };
+export { adminApp, adminFirestore, adminAuth, adminStorage };
