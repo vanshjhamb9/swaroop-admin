@@ -30,7 +30,8 @@ export async function POST(request: NextRequest) {
         name,
         model,
         registration,
-        images: [],
+        experienceName: body.experienceName || '',
+        images: body.images || [],
         imageCount: imageCount || 0,
         createdAt: admin.firestore.Timestamp.now(),
         updatedAt: admin.firestore.Timestamp.now()

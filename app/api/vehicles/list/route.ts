@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
         name: data.name || '',
         model: data.model || '',
         registration: data.registration || '',
+        experienceName: data.experienceName || '',
         images: data.images || [],
         imageCount: data.imageCount !== undefined ? data.imageCount : (data.images?.length || 0),
         createdAt: data.createdAt,
