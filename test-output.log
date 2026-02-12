@@ -1,0 +1,19 @@
+Starting test script...
+Error loading .env: Error: ENOENT: no such file or directory, open 'C:\Users\L-0053\Desktop\Uplai\Admin-panel\swaroop-admin\.env'
+Loading firebaseadmin...
+Attempting dynamic import...
+FAILED to import firebaseadmin: Missing required Firebase Admin credentials. Check your .env file.
+Error: Missing required Firebase Admin credentials. Check your .env file.
+    at initializeFirebaseAdmin (C:\Users\L-0053\Desktop\Uplai\Admin-panel\swaroop-admin\app\api\firebaseadmin.js:37:13)
+    at <anonymous> (C:\Users\L-0053\Desktop\Uplai\Admin-panel\swaroop-admin\app\api\firebaseadmin.js:69:87)
+    at Object.<anonymous> (C:\Users\L-0053\Desktop\Uplai\Admin-panel\swaroop-admin\app\api\firebaseadmin.js:69:111)
+    at Module._compile (node:internal/modules/cjs/loader:1804:14)
+    at Object.transformer (C:\Users\L-0053\Desktop\Uplai\Admin-panel\swaroop-admin\node_modules\tsx\dist\register-D46fvsV_.cjs:3:1104)
+    at Module.load (node:internal/modules/cjs/loader:1525:32)
+    at Module._load (node:internal/modules/cjs/loader:1327:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:245:24)
+    at loadCJSModuleWithModuleLoad (node:internal/modules/esm/translators:339:3)
+FIREBASE_ADMIN_PROJECT_ID: undefined
+FIREBASE_ADMIN_CLIENT_EMAIL: undefined
+FIREBASE_ADMIN_PRIVATE_KEY present: false

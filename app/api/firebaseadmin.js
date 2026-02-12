@@ -11,7 +11,8 @@ function initializeFirebaseAdmin() {
     app = admin.apps[0];
     db = admin.firestore();
     auth = admin.auth();
-    return { app, db, auth };
+    const storage = admin.storage();
+    return { app, db, auth, storage };
   }
 
   // Initialize the app
@@ -43,6 +44,8 @@ function initializeFirebaseAdmin() {
       storageBucket: process.env.FIREBASE_STORAGE_BUCKET || `${process.env.FIREBASE_ADMIN_PROJECT_ID}.appspot.com`
     });
 
+    console.log('Firebase Admin initialized with storage bucket:', process.env.FIREBASE_STORAGE_BUCKET || `${process.env.FIREBASE_ADMIN_PROJECT_ID}.appspot.com`);
+
     // Get Firestore instance with optimized settings
     db = admin.firestore();
 
@@ -60,6 +63,7 @@ function initializeFirebaseAdmin() {
     throw error;
   }
 
+  console.log('Firebase Admin Initialized successfully');
   return { app, db, auth, storage: admin.storage() };
 }
 

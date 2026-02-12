@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
     const contentType = request.headers.get('content-type') || '';
 
     if (contentType.includes('multipart/form-data')) {
+      console.log('Processing multipart/form-data...');
       const formData = await request.formData();
       name = formData.get('name') as string;
       model = formData.get('model') as string;
@@ -27,35 +28,57 @@ export async function POST(request: NextRequest) {
 
       const filePromises: Promise<string>[] = [];
       const files = formData.getAll('images');
+      console.log(`Found ${files.length} files/images in form data`);
 
       // If 'images' is not found, check if they sent indexed keys like images[0], images[1] etc
       // (Common in some client libraries)
       // For now, simpler implementation assuming 'images' field has multiple values
 
+      const submissionId = Date.now().toString();
+
       for (const file of files) {
         if (file instanceof File) {
+          console.log(`Processing file: ${file.name}, type: ${file.type}, size: ${file.size}`);
           // Upload to Firebase Storage
           const buffer = Buffer.from(await file.arrayBuffer());
-          const filename = `dealers/${dealerId}/vehicles/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-          const bucket = adminStorage.bucket();
-          const fileRef = bucket.file(filename);
+          // Group images by submission/experience using a timestamp folder
+          // sanitize filename and keep extension
+          const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+          const filename = `dealers/${dealerId}/vehicles/${submissionId}/${safeName}`;
 
-          const uploadPromise = fileRef.save(buffer, {
-            metadata: {
-              contentType: file.type,
-            },
-            public: true, // Make public for easy access
-          }).then(() => {
-            return fileRef.publicUrl();
-          });
-          filePromises.push(uploadPromise);
+          try {
+            console.log(`Uploading to storage path: ${filename}`);
+            const bucket = adminStorage.bucket();
+            console.log(`Using bucket: ${bucket.name}`);
+            const fileRef = bucket.file(filename);
+
+            const uploadPromise = fileRef.save(buffer, {
+              metadata: {
+                contentType: file.type,
+              },
+              public: true, // Make public for easy access
+            }).then(() => {
+              const publicUrl = fileRef.publicUrl();
+              console.log(`Upload success: ${publicUrl}`);
+              return publicUrl;
+            }).catch(err => {
+              console.error(`Upload failed for ${filename}:`, err);
+              throw err;
+            });
+            filePromises.push(uploadPromise);
+          } catch (storageError) {
+            console.error('Error initiating storage upload:', storageError);
+            throw storageError;
+          }
         } else if (typeof file === 'string') {
           // Handle case where it might be a URL string in form data
           images.push(file);
         }
       }
 
+      console.log('Waiting for all uploads to complete...');
       const uploadedUrls = await Promise.all(filePromises);
+      console.log('All uploads completed');
       images = [...images, ...uploadedUrls];
 
       // Update imageCount if not provided or 0
