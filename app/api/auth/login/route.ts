@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminFirestore } from '../../firebaseadmin';
 
-const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || 'AIzaSyBsz7bMlHbAt320x0-IS4ZopZEzW-B70RY';
+const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY;
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +15,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Login request received for:', email);
 
     const verifyPasswordResponse = await fetch(
       `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FIREBASE_API_KEY}`,
@@ -31,7 +30,6 @@ export async function POST(request: NextRequest) {
     );
 
     const verifyData = await verifyPasswordResponse.json();
-    console.log('Verify password response status:', verifyPasswordResponse.status);
 
     if (!verifyPasswordResponse.ok) {
       console.error('Verify password failed:', verifyData);

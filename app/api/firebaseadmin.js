@@ -17,12 +17,23 @@ function initializeFirebaseAdmin() {
 
   // Initialize the app
   try {
-    // Build service account from individual environment variables
+    // Process private key from individual environment variables
+    let privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
+    if (privateKey) {
+      // Remove surrounding quotes if they exist
+      if ((privateKey.startsWith('"') && privateKey.endsWith('"')) ||
+        (privateKey.startsWith("'") && privateKey.endsWith("'"))) {
+        privateKey = privateKey.slice(1, -1);
+      }
+      // Replace literal \n with actual newlines
+      privateKey = privateKey.replace(/\\n/g, '\n');
+    }
+
     const serviceAccount = {
       type: process.env.FIREBASE_ADMIN_TYPE,
       project_id: process.env.FIREBASE_ADMIN_PROJECT_ID,
       private_key_id: process.env.FIREBASE_ADMIN_PRIVATE_KEY_ID,
-      private_key: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      private_key: privateKey,
       client_email: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
       client_id: process.env.FIREBASE_ADMIN_CLIENT_ID,
       auth_uri: process.env.FIREBASE_ADMIN_AUTH_URI,
