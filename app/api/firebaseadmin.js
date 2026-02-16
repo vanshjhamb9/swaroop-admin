@@ -48,14 +48,16 @@ function initializeFirebaseAdmin() {
       throw new Error('Missing required Firebase Admin credentials. Check your .env file.');
     }
 
+    const bucketName = process.env.FIREBASE_STORAGE_BUCKET || `${process.env.FIREBASE_ADMIN_PROJECT_ID}.firebasestorage.app`;
+
     app = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
       databaseURL: `https://${process.env.FIREBASE_ADMIN_PROJECT_ID}.firebaseio.com`,
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || `${process.env.FIREBASE_ADMIN_PROJECT_ID}.appspot.com`
+      storageBucket: bucketName
     });
 
-    console.log('Firebase Admin initialized with storage bucket:', process.env.FIREBASE_STORAGE_BUCKET || `${process.env.FIREBASE_ADMIN_PROJECT_ID}.appspot.com`);
+    console.log('Firebase Admin initialized with storage bucket:', bucketName);
 
     // Get Firestore instance with optimized settings
     db = admin.firestore();

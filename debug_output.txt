@@ -1,0 +1,13 @@
+﻿[dotenv@17.2.3] injecting env (16) from .env.local -- tip: ΓÜÖ∩╕Å  write to custom object with { processEnv: myObject }
+Project ID: uplai-90c96
+Client Email: firebase-adminsdk-fbsvc@uplai-90c96.iam.gserviceaccount.com
+Γ£à Initialization successful
+Γ£à Firestore access successful. Collections: [
+  'admins',
+  'appConfig',
+  'dealers',
+  'payments',
+  'refrens_invoices',
+  'test_connection',
+  'users'
+]

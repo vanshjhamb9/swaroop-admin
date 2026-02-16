@@ -1,0 +1,7 @@
+Attempting to list storage buckets...
+Fetching buckets via GCS client...
+
+✅ Available Buckets:
+- uplai-aeff0.firebasestorage.app
+
+Please use one of these names in your .env file as FIREBASE_STORAGE_BUCKET

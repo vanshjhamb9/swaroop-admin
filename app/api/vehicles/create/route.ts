@@ -49,9 +49,8 @@ export async function POST(request: NextRequest) {
           const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
           const filename = `dealers/${dealerId}/vehicles/${submissionId}/${safeName}`;
 
+          const bucket = adminStorage.bucket();
           try {
-            console.log(`Uploading to storage path: ${filename}`);
-            const bucket = adminStorage.bucket();
             console.log(`Using bucket: ${bucket.name}`);
             const fileRef = bucket.file(filename);
 
@@ -68,8 +67,14 @@ export async function POST(request: NextRequest) {
               throw err;
             });
             filePromises.push(uploadPromise);
-          } catch (storageError) {
-            console.error('Error initiating storage upload:', storageError);
+          } catch (storageError: any) {
+            console.error(`Error initiating storage upload to ${filename} in bucket ${bucket.name}:`, storageError.message);
+            if (storageError.code === 404) {
+              throw new Error(`Storage Bucket '${bucket.name}' not found. Please ensure Storage is enabled in Firebase Console.`);
+            }
+            if (storageError.code === 403) {
+              throw new Error(`Permission denied for bucket '${bucket.name}'. Ensure the service account has 'Storage Object Admin' role.`);
+            }
             throw storageError;
           }
         } else if (typeof file === 'string') {

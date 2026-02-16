@@ -1,0 +1,8 @@
+﻿
+--- Testing .env.local ---
+Project: uplai-90c96
+No buckets found in this project.
+
+--- Testing .env ---
+Project: uplai-aeff0
+Buckets discovered: [ 'uplai-aeff0.firebasestorage.app' ]

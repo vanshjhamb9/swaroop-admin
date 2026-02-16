@@ -1,0 +1,4 @@
+﻿[dotenv@17.2.3] injecting env (16) from .env.local -- tip: ≡ƒöä add secrets lifecycle management: https://dotenvx.com/ops
+Testing Storage with project: uplai-90c96
+Using bucket: uplai-90c96.appspot.com
+Attempting to write to storage...
