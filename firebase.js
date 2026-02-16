@@ -9,12 +9,12 @@ import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBemry5DfDwI1DuI4YZB7wC20WhFb7_pww",
-  authDomain: "uplai-90c96.firebaseapp.com",
-  projectId: "uplai-90c96",
-  storageBucket: "uplai-90c96.firebasestorage.app",
-  messagingSenderId: "498150212901",
-  appId: "1:498150212901:web:965dccb08962c3751606cc",
+  apiKey: "AIzaSyBsz7bMlHbAt320x0-IS4ZopZEzW-B70RY",
+  authDomain: "uplai-aeff0.firebaseapp.com",
+  projectId: "uplai-aeff0",
+  storageBucket: "uplai-aeff0.firebasestorage.app",
+  messagingSenderId: "102642574058",
+  appId: "1:102642574058:web:7a6b57ffaa1960dd367c36",
   measurementId: "G-JWRN3H2NLX"
 };
 

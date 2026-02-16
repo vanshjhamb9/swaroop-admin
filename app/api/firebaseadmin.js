@@ -11,17 +11,29 @@ function initializeFirebaseAdmin() {
     app = admin.apps[0];
     db = admin.firestore();
     auth = admin.auth();
-    return { app, db, auth };
+    const storage = admin.storage();
+    return { app, db, auth, storage };
   }
 
   // Initialize the app
   try {
-    // Build service account from individual environment variables
+    // Process private key from individual environment variables
+    let privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
+    if (privateKey) {
+      // Remove surrounding quotes if they exist
+      if ((privateKey.startsWith('"') && privateKey.endsWith('"')) ||
+        (privateKey.startsWith("'") && privateKey.endsWith("'"))) {
+        privateKey = privateKey.slice(1, -1);
+      }
+      // Replace literal \n with actual newlines
+      privateKey = privateKey.replace(/\\n/g, '\n');
+    }
+
     const serviceAccount = {
       type: process.env.FIREBASE_ADMIN_TYPE,
       project_id: process.env.FIREBASE_ADMIN_PROJECT_ID,
       private_key_id: process.env.FIREBASE_ADMIN_PRIVATE_KEY_ID,
-      private_key: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      private_key: privateKey,
       client_email: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
       client_id: process.env.FIREBASE_ADMIN_CLIENT_ID,
       auth_uri: process.env.FIREBASE_ADMIN_AUTH_URI,
@@ -39,8 +51,11 @@ function initializeFirebaseAdmin() {
     app = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-      databaseURL: `https://${process.env.FIREBASE_ADMIN_PROJECT_ID}.firebaseio.com`
+      databaseURL: `https://${process.env.FIREBASE_ADMIN_PROJECT_ID}.firebaseio.com`,
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || `${process.env.FIREBASE_ADMIN_PROJECT_ID}.appspot.com`
     });
+
+    console.log('Firebase Admin initialized with storage bucket:', process.env.FIREBASE_STORAGE_BUCKET || `${process.env.FIREBASE_ADMIN_PROJECT_ID}.appspot.com`);
 
     // Get Firestore instance with optimized settings
     db = admin.firestore();
@@ -59,10 +74,11 @@ function initializeFirebaseAdmin() {
     throw error;
   }
 
-  return { app, db, auth };
+  console.log('Firebase Admin Initialized successfully');
+  return { app, db, auth, storage: admin.storage() };
 }
 
 // Initialize once
-const { app: adminApp, db: adminFirestore, auth: adminAuth } = initializeFirebaseAdmin();
+const { app: adminApp, db: adminFirestore, auth: adminAuth, storage: adminStorage } = initializeFirebaseAdmin();
 
-export { adminApp, adminFirestore, adminAuth };
+export { adminApp, adminFirestore, adminAuth, adminStorage };

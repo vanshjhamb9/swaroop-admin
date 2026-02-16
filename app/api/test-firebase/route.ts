@@ -4,7 +4,7 @@ import { adminFirestore, adminAuth } from '../firebaseadmin';
 export async function GET(request: NextRequest) {
   try {
     console.log('🧪 Testing Firebase Admin connection...');
-    
+
     // Test 1: Check if Firestore is initialized
     if (!adminFirestore) {
       throw new Error('Firestore not initialized');
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     try {
       const collections = await adminFirestore.listCollections();
       console.log('✅ Can list collections:', collections.map(c => c.id));
-      
+
       // Test 3: Try to read from a collection
       const dealersSnapshot = await adminFirestore.collection('dealers').limit(1).get();
       console.log('✅ Can query dealers collection, size:', dealersSnapshot.size);
@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: true,
         message: 'Firebase Admin is working correctly',
+        projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
         collections: collections.map(c => c.id),
         counts: {
           dealers: dealersSnapshot.size,
@@ -46,7 +48,7 @@ export async function GET(request: NextRequest) {
         stack: firestoreError.stack
       }, { status: 500 });
     }
-    
+
   } catch (error: any) {
     console.error('❌ Firebase Admin test failed:', error);
     return NextResponse.json({

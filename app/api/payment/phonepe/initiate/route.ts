@@ -248,7 +248,7 @@ export async function POST(request: NextRequest) {
 
     // Create payment request using SDK
     // Ensure redirect URL is a publicly accessible URL (not localhost)
-    const redirectUrl = `${baseUrl}/payment/success`;
+    const redirectUrl = `${baseUrl}/payment/status?merchantTransactionId=${merchantTransactionId}`;
     
     // #region agent log
     fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:250',message:'Building payment request',data:{merchantTransactionId,amountInPaise,redirectUrl,baseUrl,environment:PHONEPE_ENV===Env.PRODUCTION?'production':'sandbox'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
