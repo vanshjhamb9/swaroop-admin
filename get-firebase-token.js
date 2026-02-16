@@ -9,11 +9,18 @@
  */
 
 const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY || 'AIzaSyBsz7bMlHbAt320x0-IS4ZopZEzW-B70RY';
-const BASE_URL = process.env.BASE_URL || 'http://localhost:5000';
+
+// Support both localhost and production
+// Check for --prod flag or BASE_URL env variable
+const isProduction = process.argv.includes('--prod');
+const BASE_URL = process.env.BASE_URL || 
+                 (isProduction ? 'https://urbanuplink.ai' : 'http://localhost:5000');
 
 async function getFirebaseToken(email, password) {
   try {
+    const envType = BASE_URL.includes('urbanuplink.ai') ? 'PRODUCTION' : 'LOCALHOST';
     console.log('🔐 Logging in to get Firebase token...');
+    console.log(`🌍 Environment: ${envType}`);
     console.log(`📧 Email: ${email}`);
     console.log(`🌐 API URL: ${BASE_URL}/api/auth/login\n`);
 
@@ -76,22 +83,25 @@ async function getFirebaseToken(email, password) {
   }
 }
 
-// Get command line arguments
-const email = process.argv[2];
-const password = process.argv[3];
+// Get command line arguments (filter out --prod flag)
+const args = process.argv.slice(2).filter(arg => arg !== '--prod');
+const email = args[0];
+const password = args[1];
 
 if (!email || !password) {
   console.error('❌ Missing arguments!\n');
   console.log('Usage:');
-  console.log('  node get-firebase-token.js <email> <password>\n');
-  console.log('Example:');
+  console.log('  node get-firebase-token.js <email> <password> [--prod]\n');
+  console.log('Examples:');
+  console.log('  # Localhost (default):');
   console.log('  node get-firebase-token.js customer1@gmail.com Customer123\n');
+  console.log('  # Production:');
+  console.log('  node get-firebase-token.js customer1@gmail.com Customer123 --prod');
+  console.log('  Or: BASE_URL=https://urbanuplink.ai node get-firebase-token.js customer1@gmail.com Customer123\n');
   console.log('Test Credentials (from TEST_CREDENTIALS.md):');
   console.log('  Customer: customer1@gmail.com / Customer123');
   console.log('  Admin: admin1@car360.com / Admin123');
   console.log('  Dealer: dealer1@car360.com / Dealer123\n');
-  console.log('Or set environment variables:');
-  console.log('  BASE_URL=http://localhost:3000 node get-firebase-token.js <email> <password>\n');
   process.exit(1);
 }
 

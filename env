@@ -1,0 +1,35 @@
+# Firebase Admin SDK Configuration (Updated to uplai-aeff0)
+FIREBASE_ADMIN_TYPE=service_account
+FIREBASE_ADMIN_PROJECT_ID=uplai-aeff0
+FIREBASE_ADMIN_PRIVATE_KEY_ID=d8cee38c1a84ff09ba88c43d9b15b57ed9783141
+FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCnrrQ1u67SBlm9\n1WAfmmhg4/ONgEWLUkQgkomGhlkf9pjZ2nCxpHY80edRPxi9h1TVsAiz0w24lE+p\nEvQl89fm4mA48CysRKOaOPZZ9SMTvhgIWD/12/Ofq/b3YsSzLPRVS8/ShgKyPbKI\nzMkP6HEGSlWlCXEXRFBlWvL9V3MYGxzbKhv2nZ4OmkEvu5wqTk4KSYVQyeHji/Sy\nS0aOJcyqmZROqHbSCDiN+AEcGvs/WJHky+C4qoRnpr+16esd6azPgPYs0uMovjl2\ns+9SObtRNiHZD8AjsYfA34MRJ9DR08FXAtzPmHaB0usNb3KYO26tB2CLqIOhj2aR\nMqLdLuJVAgMBAAECggEAJIFeltckHXHH/lHSkjbHtBZUavEq0sTHc67rVVfw1cpW\nJxGNGMOFAUMyYKgDrxlkIPxovJt9YHqbaCPp9sxCK/ALQkIZe6ya0IPHsDhz2UO4\nkDKERDaNMK0bwGpmh9qI2/v8A+lsc1kGwg0RVc8FMjkjMaGfVxEmjpZREdIEytGb\n7pLqmBPCjSUkpZpOql1210q3tkvwVy5pfUv284m/xxJVbxv+2TCGS+qAigEZHah4\n7Cf3VNmhxy2uLZ/VRjVHIXAiuqqMD+WX++Dzo2T46Aaq28kfnw9keWVFLaJGX17I\nhs5n8e5023GPu5AK5F4GstabsXoD3xrfsv8kRinKQQKBgQDaKerd1V6rhHBzaA9Q\nXeAKlS0Vv/Z9YdVgfOuel9WtAerJU56J6tTM1Xiz+zJ5T4cW/MY0yse8EfuSiG11\nFHNolu7/yyUwio58gGN/r/T6KJlQN+c47e7bsvL5d/4fT0eeeMEv7KhNoesbQjBP\nRIftQ1E891c5jUfakMAokQ7UlQKBgQDEw4GeQdvu/kZtCu+gDufUY26fI+KAlIV9\nUIRgJsf+BRN1pG+OrKgUP02o1TcO1cultwlWKsZNCWi1+IYlu/ngydQQdvHH+sNI\nLvk2ZTZoldBtoKNnrVjtTmsqcjS26Zx2F9lRH0WR70LmAAdZ1ECNAsBlpr2lsRj5\n2llYJIimwQKBgD3HxxIg/Vk2/R1BZ6zLmMmGaykQnn3tOZ7EYXkc6E7BDzsKKghG\nbxK+lRrq1OVTpx7UYFDM5/kTYpmhdtXD/9arf20Cmzp+0lDhjsu3CXnaC2iTHDCb\n+JtQtsv8tgMp0U9IRPUMYLDzXH/wo3ufHZsMCDJqnNHYd3OmsDQMuBVtAoGAOCTA\n+3M3Wj5bwgl4zmbyZ3vnuKj4nE/EtzkeTIFEV4sDPnIpEsDZRM27Tw1npGgEr8hG\ndbvG0Xx50FKVlHbKmgV86SXHX5SB3DrrCUZf+/+jdWR8u7yOv0e89GOZ/wcxidDM\nRYVyyG1I3W/sqQkTUikS1O569qhNxB01mRzzkQECgYB+h7uEbMgw7KbaOeRRpYE2\nSJqiUcW0gummuWpB9TwRBrMvDsqOymuIdg4zj3mg844VS4LmDDK2GzvheOGWt8TN\nCLOqHZF1gpQ+LsH1qDIvuYtdhKKv4ZMy7zsGrtsyUgyzNWf1fIk6onJAkWBDCQu4\nmxNbhVhfTClPgaWrTBHkvg==\n-----END PRIVATE KEY-----\n"
+FIREBASE_ADMIN_CLIENT_EMAIL=firebase-adminsdk-fbsvc@uplai-aeff0.iam.gserviceaccount.com
+FIREBASE_ADMIN_CLIENT_ID=115896556319004902740
+FIREBASE_ADMIN_AUTH_URI=https://accounts.google.com/o/oauth2/auth
+FIREBASE_ADMIN_TOKEN_URI=https://oauth2.googleapis.com/token
+FIREBASE_ADMIN_AUTH_PROVIDER_CERT_URL=https://www.googleapis.com/oauth2/v1/certs
+FIREBASE_ADMIN_CLIENT_CERT_URL=https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40uplai-aeff0.iam.gserviceaccount.com
+FIREBASE_ADMIN_UNIVERSE_DOMAIN=googleapis.com
+FIREBASE_STORAGE_BUCKET=uplai-aeff0.firebasestorage.app
+FIREBASE_API_KEY=AIzaSyBsz7bMlHbAt320x0-IS4ZopZEzW-B70RY
+
+# Refrens API Configuration
+REFRENS_URL_KEY=vansh-jhamb
+REFRENS_APP_ID=vansh-jhamb-b0OGU
+REFRENS_APP_SECRET=_akWnaNYT1BXQP_stxzwZ6Ew
+
+# PhonePe Payment Gateway Configuration (Sandbox/Testing)
+PHONEPE_MERCHANT_ID=M2303MNTS7JUM
+PHONEPE_SALT_KEY=c78d7749-d9f7-4f29-b165-f09ead02e7ae
+PHONEPE_CLIENT_SECRET=c78d7749-d9f7-4f29-b165-f09ead02e7ae
+PHONEPE_SALT_INDEX=1
+PHONEPE_API_URL=https://api.phonepe.com/apis/hermes
+
+# Zoho Books Integration Configuration (Testing)
+ZOHO_CLIENT_ID=your-zoho-client-id
+ZOHO_CLIENT_SECRET=your-zoho-client-secret
+ZOHO_REFRESH_TOKEN=your-zoho-refresh-token
+ZOHO_ORGANIZATION_ID=your-zoho-organization-id
+
+# Application Configuration
+NEXT_PUBLIC_BASE_URL=http://localhost:5002

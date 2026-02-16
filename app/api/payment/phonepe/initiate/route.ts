@@ -260,7 +260,9 @@ export async function POST(request: NextRequest) {
       amount: amountInPaise,
       redirectUrl,
       baseUrl,
-      environment: PHONEPE_ENV === Env.PRODUCTION ? 'production' : 'sandbox'
+      environment: PHONEPE_ENV === Env.PRODUCTION ? 'production' : 'sandbox',
+      clientId: PHONEPE_CLIENT_ID.substring(0, 10) + '...', // Log partial ID for debugging
+      envVar: process.env.PHONEPE_ENV || 'not set (defaults to SANDBOX)'
     });
     
     const payRequest = new StandardCheckoutPayRequest(
@@ -343,7 +345,29 @@ export async function POST(request: NextRequest) {
     fetch('http://127.0.0.1:7245/ingest/2c21d75a-8c3c-43ac-ba02-55c861c8b40a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'phonepe/initiate:325',message:'Exception in payment initiation',data:{error:error.message,stack:error.stack,errorType:error.constructor.name},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
     // #endregion
     
-    console.error('Error initiating PhonePe payment:', error);
+    console.error('Error initiating PhonePe payment:', {
+      error: error.message,
+      stack: error.stack,
+      environment: PHONEPE_ENV === Env.PRODUCTION ? 'PRODUCTION' : 'SANDBOX',
+      clientIdPrefix: PHONEPE_CLIENT_ID.substring(0, 15),
+      envVar: process.env.PHONEPE_ENV || 'not set'
+    });
+    
+    // Provide helpful error message for "Client Not Found"
+    if (error.message?.includes('Client Not Found') || error.message?.includes('Not Found')) {
+      return NextResponse.json(
+        { 
+          error: 'Failed to initiate payment', 
+          details: error.message,
+          hint: PHONEPE_ENV === Env.PRODUCTION 
+            ? 'Production credentials not found. Check if PHONEPE_ENV=PRODUCTION matches your credentials, or use SANDBOX mode for testing.'
+            : 'SANDBOX credentials not found. Verify PHONEPE_CLIENT_ID and PHONEPE_CLIENT_SECRET are set correctly.',
+          environment: PHONEPE_ENV === Env.PRODUCTION ? 'PRODUCTION' : 'SANDBOX'
+        },
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to initiate payment', details: error.message },
       { status: 500 }

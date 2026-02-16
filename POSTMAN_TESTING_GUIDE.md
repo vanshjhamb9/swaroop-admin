@@ -370,11 +370,33 @@ Token verification failed: Firebase ID token has expired. Get a fresh ID token f
 - Admin: `admin1@car360.com` / `Admin123`
 - Dealer: `dealer1@car360.com` / `Dealer123`
 
+## 🌐 Testing on Production
+
+**Important:** When testing on production (`https://urbanuplink.ai`), you **MUST** get a token from the production login endpoint!
+
+### Get Production Token:
+```bash
+node get-firebase-token.js customer1@gmail.com Customer123 --prod
+```
+
+Or in Postman:
+1. Create Login request: `POST https://urbanuplink.ai/api/auth/login`
+2. Add Test Script to auto-save token
+3. Run Login → Token auto-saves
+4. Use token in PhonePe request
+
+**See `TEST_PRODUCTION.md` for detailed production testing guide.**
+
+---
+
 ## 📞 Support
 
 If you encounter issues:
 1. **Token expired**: Get a fresh token using the helper script
-2. Check the server logs for detailed error messages
-3. Verify all environment variables are set correctly
-4. Ensure Firebase token is valid and not expired (tokens expire after 1 hour)
-5. Check PhonePe dashboard for API status
+   - Localhost: `node get-firebase-token.js email password`
+   - Production: `node get-firebase-token.js email password --prod`
+2. **Testing on production**: Make sure you get token from production login endpoint
+3. Check the server logs for detailed error messages
+4. Verify all environment variables are set correctly
+5. Ensure Firebase token is valid and not expired (tokens expire after 1 hour)
+6. Check PhonePe dashboard for API status
