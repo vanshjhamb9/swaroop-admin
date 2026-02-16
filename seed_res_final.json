@@ -1,0 +1,64 @@
+{
+  "success": true,
+  "message": "Database seeded successfully",
+  "results": {
+    "superAdmin": {
+      "email": "superadmin@car360.com",
+      "status": "already exists"
+    },
+    "admins": [
+      {
+        "email": "admin1@car360.com",
+        "status": "already exists"
+      },
+      {
+        "email": "admin2@car360.com",
+        "status": "already exists"
+      }
+    ],
+    "dealers": [
+      {
+        "email": "dealer1@car360.com",
+        "status": "already exists"
+      },
+      {
+        "email": "dealer2@car360.com",
+        "status": "already exists"
+      },
+      {
+        "email": "dealer3@car360.com",
+        "status": "already exists"
+      }
+    ],
+    "customers": [
+      {
+        "email": "customer1@gmail.com",
+        "status": "already exists"
+      },
+      {
+        "email": "customer2@gmail.com",
+        "status": "already exists"
+      },
+      {
+        "email": "customer3@gmail.com",
+        "status": "already exists"
+      },
+      {
+        "email": "customer4@gmail.com",
+        "status": "already exists"
+      },
+      {
+        "email": "customer5@gmail.com",
+        "status": "already exists"
+      }
+    ],
+    "payments": [],
+    "errors": []
+  },
+  "credentials": {
+    "superAdmin": "superadmin@car360.com / SuperAdmin123",
+    "admin": "admin1@car360.com / Admin123",
+    "dealer": "dealer1@car360.com / Dealer123",
+    "customer": "customer1@gmail.com / Customer123"
+  }
+}

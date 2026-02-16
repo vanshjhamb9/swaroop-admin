@@ -1,0 +1,30 @@
+{
+  "success": true,
+  "message": "Database seeded successfully",
+  "results": {
+    "superAdmin": null,
+    "admins": [],
+    "dealers": [],
+    "customers": [],
+    "payments": [],
+    "errors": [
+      "Super Admin: There is no configuration corresponding to the provided identifier.",
+      "Admin admin1@car360.com: There is no configuration corresponding to the provided identifier.",
+      "Admin admin2@car360.com: There is no configuration corresponding to the provided identifier.",
+      "Dealer dealer1@car360.com: There is no configuration corresponding to the provided identifier.",
+      "Dealer dealer2@car360.com: There is no configuration corresponding to the provided identifier.",
+      "Dealer dealer3@car360.com: There is no configuration corresponding to the provided identifier.",
+      "Customer customer1@gmail.com: There is no configuration corresponding to the provided identifier.",
+      "Customer customer2@gmail.com: There is no configuration corresponding to the provided identifier.",
+      "Customer customer3@gmail.com: There is no configuration corresponding to the provided identifier.",
+      "Customer customer4@gmail.com: There is no configuration corresponding to the provided identifier.",
+      "Customer customer5@gmail.com: There is no configuration corresponding to the provided identifier."
+    ]
+  },
+  "credentials": {
+    "superAdmin": "superadmin@car360.com / SuperAdmin123",
+    "admin": "admin1@car360.com / Admin123",
+    "dealer": "dealer1@car360.com / Dealer123",
+    "customer": "customer1@gmail.com / Customer123"
+  }
+}

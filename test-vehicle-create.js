@@ -17,7 +17,7 @@ async function testVehicleCreate(email, password) {
 
         const loginData = await loginResponse.json();
         if (!loginResponse.ok) {
-            console.error('❌ Login failed:', loginData.error);
+            console.error('❌ Login failed:', loginData);
             return;
         }
 
