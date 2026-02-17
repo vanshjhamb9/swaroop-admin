@@ -32,17 +32,38 @@ export async function POST(request: NextRequest) {
       const filePromises: Promise<string>[] = [];
       const keys = Array.from(formData.keys());
       console.log('FormData keys received:', keys);
+      
+      // Debug: Log all entries to see what Postman is actually sending
+      console.log('=== DEBUGGING FORM DATA ===');
+      for (const key of keys) {
+        const values = formData.getAll(key);
+        console.log(`Key: "${key}", Type: ${typeof values[0]}, Count: ${values.length}`);
+        values.forEach((val, idx) => {
+          if (val instanceof File) {
+            console.log(`  [${idx}] File: ${val.name}, size: ${val.size}, type: ${val.type}`);
+          } else {
+            console.log(`  [${idx}] Value: ${val}`);
+          }
+        });
+      }
+      console.log('=== END DEBUG ===');
 
       // Try multiple ways to get files (Postman might send them differently)
-      let files = formData.getAll('images');
+      let files: (File | string)[] = [];
+      
+      // Method 1: Direct getAll('images')
+      files = formData.getAll('images');
+      console.log(`Method 1 (getAll('images')): Found ${files.length} files`);
+      
+      // Method 2: Check for images[]
       if (files.length === 0) {
-        console.log("No files found under 'images', checking 'images[]'...");
         files = formData.getAll('images[]');
+        console.log(`Method 2 (getAll('images[]')): Found ${files.length} files`);
       }
       
-      // Check for indexed keys like images[0], images[1] (common in Postman)
+      // Method 3: Check for indexed keys like images[0], images[1]
       if (files.length === 0) {
-        console.log("Checking for indexed keys like images[0], images[1]...");
+        console.log("Method 3: Checking for indexed keys like images[0], images[1]...");
         const indexedFiles: File[] = [];
         let index = 0;
         while (true) {
@@ -56,11 +77,34 @@ export async function POST(request: NextRequest) {
         }
         if (indexedFiles.length > 0) {
           files = indexedFiles;
-          console.log(`Found ${files.length} files using indexed keys`);
+          console.log(`Method 3: Found ${files.length} files using indexed keys`);
+        }
+      }
+      
+      // Method 4: Check ALL entries for File objects (last resort)
+      if (files.length === 0) {
+        console.log("Method 4: Checking ALL formData entries for File objects...");
+        const allFiles: File[] = [];
+        for (const key of keys) {
+          const values = formData.getAll(key);
+          for (const val of values) {
+            if (val instanceof File) {
+              allFiles.push(val);
+              console.log(`Found file in key "${key}": ${val.name}`);
+            }
+          }
+        }
+        if (allFiles.length > 0) {
+          files = allFiles;
+          console.log(`Method 4: Found ${files.length} files in all entries`);
         }
       }
 
-      console.log(`Found ${files.length} files/images in form data`);
+      // Filter out string values, keep only File objects
+      const fileObjects = files.filter(f => f instanceof File) as File[];
+      console.log(`Final: Found ${fileObjects.length} file objects to process`);
+      
+      files = fileObjects;
 
       // If 'images' is not found, check if they sent indexed keys like images[0], images[1] etc
       // (Common in some client libraries)
@@ -177,11 +221,20 @@ export async function POST(request: NextRequest) {
         updatedAt: admin.firestore.Timestamp.now()
       });
 
-    return NextResponse.json({
+    // Ensure images array is always returned, even if empty
+    const response = {
       id: vehicleRef.id,
       message: 'Vehicle created successfully',
-      images: images // Return the uploaded URLs so client knows
+      images: images || [] // Return the uploaded URLs so client knows
+    };
+    
+    console.log('Final response:', {
+      vehicleId: response.id,
+      imageCount: response.images.length,
+      images: response.images
     });
+    
+    return NextResponse.json(response);
   } catch (error: any) {
     console.error('Error creating vehicle:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
