@@ -32,79 +32,36 @@ export async function POST(request: NextRequest) {
       const filePromises: Promise<string>[] = [];
       const keys = Array.from(formData.keys());
       console.log('FormData keys received:', keys);
-      
-      // Debug: Log all entries to see what Postman is actually sending
-      console.log('=== DEBUGGING FORM DATA ===');
-      for (const key of keys) {
-        const values = formData.getAll(key);
-        console.log(`Key: "${key}", Type: ${typeof values[0]}, Count: ${values.length}`);
-        values.forEach((val, idx) => {
-          if (val instanceof File) {
-            console.log(`  [${idx}] File: ${val.name}, size: ${val.size}, type: ${val.type}`);
-          } else {
-            console.log(`  [${idx}] Value: ${val}`);
-          }
-        });
-      }
-      console.log('=== END DEBUG ===');
 
-      // Try multiple ways to get files (Postman might send them differently)
-      let files: (File | string)[] = [];
+      // Collect all files from all keys that might contain images
+      // Postman may send keys with trailing spaces like "images " or duplicate entries
+      const allFiles: File[] = [];
+      const seenFiles = new Set<string>(); // Track files by name+size to avoid duplicates
       
-      // Method 1: Direct getAll('images')
-      files = formData.getAll('images');
-      console.log(`Method 1 (getAll('images')): Found ${files.length} files`);
-      
-      // Method 2: Check for images[]
-      if (files.length === 0) {
-        files = formData.getAll('images[]');
-        console.log(`Method 2 (getAll('images[]')): Found ${files.length} files`);
-      }
-      
-      // Method 3: Check for indexed keys like images[0], images[1]
-      if (files.length === 0) {
-        console.log("Method 3: Checking for indexed keys like images[0], images[1]...");
-        const indexedFiles: File[] = [];
-        let index = 0;
-        while (true) {
-          const indexedKey = `images[${index}]`;
-          const file = formData.get(indexedKey);
-          if (!file) break;
-          if (file instanceof File) {
-            indexedFiles.push(file);
-          }
-          index++;
-        }
-        if (indexedFiles.length > 0) {
-          files = indexedFiles;
-          console.log(`Method 3: Found ${files.length} files using indexed keys`);
-        }
-      }
-      
-      // Method 4: Check ALL entries for File objects (last resort)
-      if (files.length === 0) {
-        console.log("Method 4: Checking ALL formData entries for File objects...");
-        const allFiles: File[] = [];
-        for (const key of keys) {
+      // Check all keys that might contain images (handle trailing/leading spaces)
+      for (const key of keys) {
+        const trimmedKey = key.trim().toLowerCase();
+        // Only process keys that look like 'images' (with or without spaces/braces)
+        if (trimmedKey === 'images' || trimmedKey.startsWith('images')) {
           const values = formData.getAll(key);
           for (const val of values) {
             if (val instanceof File) {
-              allFiles.push(val);
-              console.log(`Found file in key "${key}": ${val.name}`);
+              // Create unique identifier: filename + size
+              const fileId = `${val.name}_${val.size}`;
+              if (!seenFiles.has(fileId)) {
+                seenFiles.add(fileId);
+                allFiles.push(val);
+                console.log(`Found unique file in key "${key}": ${val.name} (${val.size} bytes)`);
+              } else {
+                console.log(`Skipping duplicate file: ${val.name} (${val.size} bytes)`);
+              }
             }
           }
         }
-        if (allFiles.length > 0) {
-          files = allFiles;
-          console.log(`Method 4: Found ${files.length} files in all entries`);
-        }
       }
 
-      // Filter out string values, keep only File objects
-      const fileObjects = files.filter(f => f instanceof File) as File[];
-      console.log(`Final: Found ${fileObjects.length} file objects to process`);
-      
-      files = fileObjects;
+      const files = allFiles;
+      console.log(`Final: Found ${files.length} unique file objects to process`);
 
       // If 'images' is not found, check if they sent indexed keys like images[0], images[1] etc
       // (Common in some client libraries)
