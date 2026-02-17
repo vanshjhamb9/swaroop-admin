@@ -30,7 +30,15 @@ export async function POST(request: NextRequest) {
       imageCount = parseInt(formData.get('imageCount') as string || '0');
 
       const filePromises: Promise<string>[] = [];
-      const files = formData.getAll('images');
+      const keys = Array.from(formData.keys());
+      console.log('FormData keys received:', keys);
+
+      let files = formData.getAll('images');
+      if (files.length === 0) {
+        console.log("No files found under 'images', checking 'images[]'...");
+        files = formData.getAll('images[]');
+      }
+
       console.log(`Found ${files.length} files/images in form data`);
 
       // If 'images' is not found, check if they sent indexed keys like images[0], images[1] etc
