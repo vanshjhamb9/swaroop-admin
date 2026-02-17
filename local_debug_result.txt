@@ -1,0 +1,15 @@
+🚀 Checking localhost for file upload capability...
+📡 Sending POST to http://localhost:3000/api/vehicles/create...
+❌ Error testing localhost: FetchError: request to http://localhost:3000/api/vehicles/create failed, reason: 
+    at ClientRequest.<anonymous> (C:\Users\asus\OneDrive\Desktop\Swaroop admin\node_modules\node-fetch\lib\index.js:1501:11)
+    at ClientRequest.emit (node:events:518:28)
+    at emitErrorEvent (node:_http_client:104:11)
+    at Socket.socketErrorListener (node:_http_client:518:5)
+    at Socket.emit (node:events:518:28)
+    at emitErrorNT (node:internal/streams/destroy:170:8)
+    at emitErrorCloseNT (node:internal/streams/destroy:129:3)
+    at process.processTicksAndRejections (node:internal/process/task_queues:90:21) {
+  type: 'system',
+  errno: 'ECONNREFUSED',
+  code: 'ECONNREFUSED'
+}

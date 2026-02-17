@@ -1,7 +1,4 @@
-
-/**
- * Test Vehicle Creation on Production
- * Usage: node test-vehicle-create.js <email> <password>
+> <password>
  */
 
 const PRODUCTION_URL = 'https://urbanuplink.ai';
@@ -14,14 +11,10 @@ async function testVehicleCreate(email, password) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
         });
-
-        const loginData = await loginResponse.json();
+await loginResponse.json();
         if (!loginResponse.ok) {
             console.error('❌ Login failed:', loginData);
-            return;
-        }
-
-        const token = loginData.data.idToken;
+            return; loginData.data.idToken;
         console.log('✅ Token obtained. Attempting to create vehicle...');
 
         const formData = new FormData();

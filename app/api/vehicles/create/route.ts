@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuth, adminFirestore, adminStorage } from '../../firebaseadmin';
 import * as admin from 'firebase-admin';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,12 +64,26 @@ export async function POST(request: NextRequest) {
             console.log(`Using bucket: ${bucket.name}`);
             const fileRef = bucket.file(filename);
 
+            // Generate a download token for the file
+            const downloadToken = uuidv4();
+            
             const uploadPromise = fileRef.save(buffer, {
               metadata: {
                 contentType: processingFile.type,
+                metadata: {
+                  firebaseStorageDownloadTokens: downloadToken
+                }
               }
-            }).then(() => {
-              const publicUrl = fileRef.publicUrl();
+            }).then(async () => {
+              // Make file public so it can be accessed via the download URL
+              await fileRef.makePublic();
+              
+              // Construct the Firebase Storage download URL format
+              // Format: https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{path}?alt=media&token={token}
+              const bucketName = bucket.name;
+              const encodedPath = encodeURIComponent(filename);
+              
+              const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedPath}?alt=media&token=${downloadToken}`;
               console.log(`Upload success: ${publicUrl}`);
               return publicUrl;
             }).catch(err => {
