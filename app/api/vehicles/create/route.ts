@@ -40,13 +40,14 @@ export async function POST(request: NextRequest) {
       const submissionId = Date.now().toString();
 
       for (const file of files) {
-        if (file instanceof File) {
-          console.log(`Processing file: ${file.name}, type: ${file.type}, size: ${file.size}`);
+        if (typeof file !== 'string') {
+          const processingFile = file as any;
+          console.log(`Processing file: ${processingFile.name}, type: ${processingFile.type}, size: ${processingFile.size}`);
           // Upload to Firebase Storage
-          const buffer = Buffer.from(await file.arrayBuffer());
+          const buffer = Buffer.from(await processingFile.arrayBuffer());
           // Group images by submission/experience using a timestamp folder
           // sanitize filename and keep extension
-          const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+          const safeName = processingFile.name.replace(/[^a-zA-Z0-9.]/g, '_');
           const filename = `dealers/${dealerId}/vehicles/${submissionId}/${safeName}`;
 
           const bucket = adminStorage.bucket();
@@ -56,7 +57,7 @@ export async function POST(request: NextRequest) {
 
             const uploadPromise = fileRef.save(buffer, {
               metadata: {
-                contentType: file.type,
+                contentType: processingFile.type,
               }
             }).then(() => {
               const publicUrl = fileRef.publicUrl();
