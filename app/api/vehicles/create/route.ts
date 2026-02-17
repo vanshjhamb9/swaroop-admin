@@ -33,10 +33,31 @@ export async function POST(request: NextRequest) {
       const keys = Array.from(formData.keys());
       console.log('FormData keys received:', keys);
 
+      // Try multiple ways to get files (Postman might send them differently)
       let files = formData.getAll('images');
       if (files.length === 0) {
         console.log("No files found under 'images', checking 'images[]'...");
         files = formData.getAll('images[]');
+      }
+      
+      // Check for indexed keys like images[0], images[1] (common in Postman)
+      if (files.length === 0) {
+        console.log("Checking for indexed keys like images[0], images[1]...");
+        const indexedFiles: File[] = [];
+        let index = 0;
+        while (true) {
+          const indexedKey = `images[${index}]`;
+          const file = formData.get(indexedKey);
+          if (!file) break;
+          if (file instanceof File) {
+            indexedFiles.push(file);
+          }
+          index++;
+        }
+        if (indexedFiles.length > 0) {
+          files = indexedFiles;
+          console.log(`Found ${files.length} files using indexed keys`);
+        }
       }
 
       console.log(`Found ${files.length} files/images in form data`);
@@ -100,9 +121,23 @@ export async function POST(request: NextRequest) {
       }
 
       console.log('Waiting for all uploads to complete...');
-      const uploadedUrls = await Promise.all(filePromises);
-      console.log('All uploads completed');
-      images = [...images, ...uploadedUrls];
+      console.log(`Total file promises: ${filePromises.length}`);
+      
+      try {
+        const uploadedUrls = await Promise.all(filePromises);
+        console.log('All uploads completed successfully');
+        console.log(`Received ${uploadedUrls.length} URLs:`, uploadedUrls);
+        images = [...images, ...uploadedUrls];
+      } catch (uploadError: any) {
+        console.error('Error during file uploads:', uploadError);
+        console.error('Upload error details:', {
+          message: uploadError.message,
+          stack: uploadError.stack,
+          code: uploadError.code
+        });
+        // Don't fail the entire request, but log the error
+        // Images array will remain empty if uploads fail
+      }
 
       // Update imageCount if not provided or 0
       if (!imageCount && images.length > 0) {
