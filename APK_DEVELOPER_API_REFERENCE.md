@@ -14,7 +14,11 @@ All protected endpoints require the `Authorization` header:
 Authorization: Bearer <idToken>
 ```
 
-The `idToken` is obtained from the login response. It expires after **1 hour**. Use the `refreshToken` to get a new `idToken` when it expires.
+The `idToken` is obtained from the login response. It is a long JWT string starting with `ey...`.
+
+> **⚠️ COMMON ERROR:** If you see `"Decoding Firebase ID token failed"`, it means you are sending an invalid string (like `"undefined"`, `"null"`, or a malformed token). Ensure you are waiting for the login to complete and extracting the `idToken` correctly before making API calls.
+
+It expires after **1 hour**. Use the `refreshToken` to get a new `idToken` when it expires.
 
 ---
 

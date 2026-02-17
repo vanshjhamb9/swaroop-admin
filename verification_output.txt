@@ -1,0 +1,47 @@
+🚀 Starting Image Verification Test...
+
+STEP 1: Logging in...
+✅ Login Successful.
+
+STEP 2: Creating Vehicle with Dummy Image URL...
+✅ Vehicle Created.
+
+STEP 3: Fetching Experiences List...
+✅ Found newly created experience!
+--- NEW EXPERIENCE JSON ---
+{
+  "id": "2kKIBuzriL4LrgTu86RM",
+  "name": "Experience 1771326500294",
+  "vehicleCount": 1,
+  "totalImages": 1,
+  "vehicles": [
+    {
+      "id": "2kKIBuzriL4LrgTu86RM",
+      "name": "Test Car 1771326500294",
+      "model": "Test Model",
+      "registration": "TEST-1771326500294",
+      "images": [
+        "https://via.placeholder.com/150?text=TestImage_1771326500294"
+      ],
+      "imageCount": 1,
+      "createdAt": {
+        "_seconds": 1771326501,
+        "_nanoseconds": 221000000
+      },
+      "updatedAt": {
+        "_seconds": 1771326501,
+        "_nanoseconds": 221000000
+      }
+    }
+  ],
+  "createdAt": {
+    "_seconds": 1771326501,
+    "_nanoseconds": 221000000
+  },
+  "updatedAt": {
+    "_seconds": 1771326501,
+    "_nanoseconds": 221000000
+  }
+}
+---------------------------
+🎉 SUCCESS: The image URL is present in the list!
