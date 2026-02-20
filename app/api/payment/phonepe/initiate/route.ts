@@ -10,6 +10,36 @@ const PHONEPE_CLIENT_VERSION = parseInt(process.env.PHONEPE_CLIENT_VERSION || pr
 // Use SANDBOX for test, PRODUCTION for production (default to SANDBOX if not specified)
 const PHONEPE_ENV = process.env.PHONEPE_ENV === 'PRODUCTION' ? Env.PRODUCTION : Env.SANDBOX;
 
+function resolveBaseUrl(request: NextRequest): string {
+  const configuredBaseUrl =
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    process.env.BASE_URL ||
+    '';
+
+  // Never use localhost/127.0.0.1 for payment redirects in deployed environments.
+  if (configuredBaseUrl) {
+    const normalized = configuredBaseUrl.trim().replace(/\/+$/, '');
+    const lower = normalized.toLowerCase();
+    const isLocalhost = lower.includes('localhost') || lower.includes('127.0.0.1');
+    if (!isLocalhost) {
+      return normalized;
+    }
+  }
+
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  if (forwardedHost && !forwardedHost.includes('localhost') && !forwardedHost.includes('127.0.0.1')) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+
+  // Final safe fallback
+  return 'https://www.urbanuplink.ai';
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Validate PhonePe configuration
@@ -230,9 +260,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get base URL - use production URL if available, otherwise localhost
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 
-                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://urbanuplink.ai');
+    const baseUrl = resolveBaseUrl(request);
 
     const merchantTransactionId = `TXN_${uuidv4()}`;
     const amountInPaise = Math.round(amount * 100);

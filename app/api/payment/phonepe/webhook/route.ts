@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adminFirestore } from '../../../firebaseadmin';
 import crypto from 'crypto';
 
-const PHONEPE_SALT_KEY = process.env.PHONEPE_SALT_KEY || '';
-const PHONEPE_SALT_INDEX = process.env.PHONEPE_SALT_INDEX || '1';
+const PHONEPE_SALT_KEY = process.env.PHONEPE_SALT_KEY || process.env.PHONEPE_CLIENT_SECRET || '';
+const PHONEPE_SALT_INDEX = process.env.PHONEPE_SALT_INDEX || process.env.PHONEPE_CLIENT_VERSION || '1';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,7 +26,10 @@ export async function POST(request: NextRequest) {
       .digest('hex') + '###' + PHONEPE_SALT_INDEX;
 
     if (xVerifyHeader !== expectedChecksum) {
-      console.error('Checksum verification failed');
+      console.error('Checksum verification failed', {
+        hasSaltKey: !!PHONEPE_SALT_KEY,
+        saltIndex: PHONEPE_SALT_INDEX
+      });
       return NextResponse.json(
         { error: 'Invalid checksum' },
         { status: 400 }
